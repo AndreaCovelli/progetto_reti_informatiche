@@ -1,0 +1,1 @@
+#define MAX_NICK_LENGTH 20
