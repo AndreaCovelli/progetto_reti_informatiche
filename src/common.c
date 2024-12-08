@@ -1,0 +1,1 @@
+// Implementazione delle funzioni comuni al server e al client

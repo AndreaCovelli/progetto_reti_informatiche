@@ -61,7 +61,9 @@ bool remove_player(PlayerArray* array, const char* nickname) {
 
     for (int i = 0; i < array->count; i++) {
         if (strcmp(array->players[i].nickname, nickname) == 0) {
-            if (i < array->count - 1) {
+            if (i < array->count - 1) {  // Se il giocatore non è l'ultimo
+                // Sposta l'ultimo giocatore nell'array in posizione i
+                // minimizzando il numero di spostamenti
                 array->players[i] = array->players[array->count - 1];
             }
             array->count--;
@@ -106,4 +108,26 @@ void sort_players_by_score(PlayerArray* array, bool sport_quiz) {
     // Use qsort to sort the players
     qsort(array->players, array->count, sizeof(Player), 
           sport_quiz ? compare_sport_score : compare_geography_score);
+}
+
+int get_active_players_count(PlayerArray* array) {
+    return array ? array->count : 0;
+}
+
+bool has_completed_quiz(PlayerArray* array, const char* nickname, bool sport_quiz) {
+    Player* player = find_player(array, nickname);
+    if (!player) return false;
+    
+    return sport_quiz ? player->completed_sport : player->completed_geography;
+}
+
+void mark_quiz_as_completed(PlayerArray* array, const char* nickname, bool sport_quiz) {
+    Player* player = find_player(array, nickname);
+    if (!player) return;
+    
+    if (sport_quiz) {
+        player->completed_sport = true;
+    } else {
+        player->completed_geography = true;
+    }
 }

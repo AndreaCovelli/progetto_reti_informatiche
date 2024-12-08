@@ -1,0 +1,19 @@
+# Compiled files
+*.o
+*.out
+*.exe
+*.class
+.vscode/
+
+# Log files
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# Project specific backups
+*.bak
+backup/

@@ -1,0 +1,1 @@
+// Strutture e funzioni di rete usate sia dal server che dal client

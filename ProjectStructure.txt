@@ -1,0 +1,19 @@
+.
+├── Makefile
+├── ProjectStructure.txt
+├── include
+│   ├── client.h
+│   ├── common.h
+│   ├── constants.h
+│   ├── player.h
+│   └── server.h
+├── res
+│   ├── geography_quiz.txt
+│   └── sport_quiz.txt
+└── src
+    ├── client.c
+    ├── common.c
+    ├── player.c
+    └── server.c
+
+4 directories, 13 files
