@@ -33,7 +33,12 @@ static bool parse_question_line(char* line, Question* question) {
 void select_random_questions(Quiz* quiz) {
     if (!quiz || quiz->total_count == 0) return;
     
-    // Alloca memoria per le domande selezionate
+    // Liberiamo l'eventuale selezione precedente
+    if (quiz->selected) {
+        free(quiz->selected);
+    }
+    
+    // Allochiamo memoria per le nuove domande
     quiz->selected = malloc(sizeof(Question) * QUESTIONS_PER_GAME);
     if (!quiz->selected) return;
     
@@ -41,15 +46,14 @@ void select_random_questions(Quiz* quiz) {
     bool* used = calloc(quiz->total_count, sizeof(bool));
     if (!used) {
         free(quiz->selected);
+        quiz->selected = NULL;
         return;
     }
     
     quiz->selected_count = 0;
-    
     // Seleziona QUESTIONS_PER_GAME domande casuali
     while (quiz->selected_count < QUESTIONS_PER_GAME) {
         int idx = rand() % quiz->total_count;
-        
         // Se questa domanda non è già stata selezionata
         if (!used[idx]) {
             quiz->selected[quiz->selected_count] = quiz->questions[idx];
@@ -108,7 +112,7 @@ Quiz* load_quiz(const char* filename) {
     }
     
     // Seleziona domande casuali per questa partita
-    select_random_questions(quiz);
+    // select_random_questions(quiz);
     
     return quiz;
 }

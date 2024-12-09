@@ -184,6 +184,9 @@ void process_client_message(ServerState* state, int client_socket) {
             client->is_playing = true;
             
             Quiz* selected_quiz = (client->current_quiz == 1) ? sport_quiz : geography_quiz;
+            // Generiamo un nuovo set di domande casuali per questo client
+            select_random_questions(selected_quiz);
+            // Inviamo la prima domanda
             send_question_to_client(client_socket, selected_quiz, client->current_question);
             break;
 

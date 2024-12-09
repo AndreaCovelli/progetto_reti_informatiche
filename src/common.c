@@ -112,6 +112,7 @@ const char* message_type_to_string(MessageType type) {
         case MSG_SCORE: return "MSG_SCORE";
         case MSG_ERROR: return "MSG_ERROR";
         case MSG_DISCONNECT: return "MSG_DISCONNECT";
+        case MSG_QUIZ_COMPLETED: return "MSG_QUIZ_COMPLETED";
         default: return "UNKNOWN";
     }
 }

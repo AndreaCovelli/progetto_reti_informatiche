@@ -15,7 +15,7 @@
  * @param payload contenuto del messaggio
  * @see constants.h per i tipi di messaggio
  * @note COMMAND|LENGTH|PAYLOAD dove
- * COMMAND e LENGHT fanno parte dell'header
+ * COMMAND e LENGTH fanno parte dell'header
  */
 typedef struct {
     MessageType type;

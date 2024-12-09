@@ -7,6 +7,9 @@
 obj/
 server
 client
+server_debug
+client_debug
+domande_casuali_quiz.md
 
 # Log files
 *.log
