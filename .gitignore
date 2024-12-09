@@ -4,6 +4,9 @@
 *.exe
 *.class
 .vscode/
+obj/
+server
+client
 
 # Log files
 *.log

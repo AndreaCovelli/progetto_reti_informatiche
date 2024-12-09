@@ -37,6 +37,7 @@ bool connect_to_server(ClientState* state, int port) {
         return false;
     }
 
+    // Connessione al server, indirizzo localhost
     if (setup_connection("127.0.0.1", port) < 0) {
         fprintf(stderr, "Errore nella connessione al server\n");
         close(state->socket);
