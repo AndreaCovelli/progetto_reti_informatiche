@@ -1,1 +1,96 @@
 // Implementazione delle funzioni comuni al server e al client
+#include "include/common.h"
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <errno.h>
+
+int create_socket() {
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0) {
+        perror("Errore nella creazione del socket");
+        return ERR_SOCKET;
+    }
+    
+    // Set socket options to allow address reuse
+    int opt = 1;
+    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+        perror("Errore nell'impostazione delle opzioni del socket");
+        close(sock);
+        return ERR_SOCKET;
+    }
+    
+    return sock;
+}
+
+int setup_connection(const char* ip, int port) {
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+    
+    if (inet_pton(AF_INET, ip, &addr.sin_addr) <= 0) {
+        perror("Indirizzo IP non valido");
+        return ERR_CONNECT;
+    }
+    
+    int sock = create_socket();
+    if (sock < 0) return sock;
+    
+    if (connect(sock, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+        perror("Errore nella connessione");
+        close(sock);
+        return ERR_CONNECT;
+    }
+    
+    return sock;
+}
+
+ssize_t send_message(int sock, Message* msg) {
+    if (!msg) return ERR_SEND;
+    
+    // First send the message header (type and length)
+    ssize_t header_size = sizeof(msg->type) + sizeof(msg->length);
+    ssize_t sent = send(sock, msg, header_size, 0);
+    if (sent != header_size) {
+        return ERR_SEND;
+    }
+    
+    // Then send the payload if there is one
+    if (msg->length > 0) {
+        sent = send(sock, msg->payload, msg->length, 0);
+        if (sent != msg->length) {
+            return ERR_SEND;
+        }
+    }
+    
+    return sent + header_size;
+}
+
+ssize_t receive_message(int sock, Message* msg) {
+    if (!msg) return ERR_RECV;
+    
+    // First receive the message header
+    ssize_t header_size = sizeof(msg->type) + sizeof(msg->length);
+    ssize_t received = recv(sock, msg, header_size, 0);
+    if (received != header_size) {
+        return ERR_RECV;
+    }
+    
+    // Then receive the payload if there is one
+    if (msg->length > 0) {
+        if (msg->length > MAX_MSG_LEN) {
+            return ERR_RECV;
+        }
+        
+        received = recv(sock, msg->payload, msg->length, 0);
+        if (received != msg->length) {
+            return ERR_RECV;
+        }
+        
+        // Ensure null termination
+        msg->payload[msg->length] = '\0';
+    }
+    
+    return received + header_size;
+}

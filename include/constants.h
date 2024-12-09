@@ -24,6 +24,7 @@
 #define MSG_ANSWER 3
 #define MSG_SCORE 4
 #define MSG_ERROR 5
+#define MSG_DISCONNECT 6
 
 // Capacità iniziale dell'array di giocatori
 #define INITIAL_PLAYER_ARRAY_SIZE 10

@@ -7,10 +7,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 
 // Struttura dei messaggi (COMMAND|LENGTH|PAYLOAD, | sta per concatena)
 typedef struct {

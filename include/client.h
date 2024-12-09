@@ -51,7 +51,7 @@ int show_quiz_selection();
  * @param state struttura ClientState
  * @return true se il nickname è valido e accettato dal server
  */
-bool handle_nickname_input(ClientState* state);
+bool validate_and_send_nickname(ClientState* state);
 
 // Funzioni di gestione del gioco
 /**
@@ -59,7 +59,7 @@ bool handle_nickname_input(ClientState* state);
  * @param state struttura ClientState
  * @return true se la sessione termina normalmente
  */
-bool handle_game_session(ClientState* state);
+bool play_game_session(ClientState* state);
 
 /**
  * Gestisce una singola domanda
@@ -67,14 +67,6 @@ bool handle_game_session(ClientState* state);
  * @param question testo della domanda
  * @return true se la risposta è stata inviata con successo
  */
-bool handle_question(ClientState* state, const char* question);
-
-/**
- * Gestisce i comandi speciali durante il gioco
- * @param state struttura ClientState
- * @param command comando inserito dall'utente
- * @return true se il comando è stato gestito
- */
-bool handle_game_command(ClientState* state, const char* command);
+bool answer_question(ClientState* state, const char* question);
 
 #endif
