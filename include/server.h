@@ -5,11 +5,14 @@
 #include "player.h"
 #include <sys/select.h>
 
-typedef struct {
-    int socket;
-    struct sockaddr_in addr;
-} WaitingClient;
-
+/**
+ * Struttura per mantenere lo stato del server
+ * @param server_socket Socket del server
+ * @param active_fds Set di descrittori attivi
+ * @param read_fds Set di descrittori in lettura
+ * @param max_fd Massimo descrittore attivo
+ * @param players Array di giocatori
+ */
 typedef struct {
     int server_socket;
     fd_set active_fds;
@@ -43,7 +46,7 @@ void cleanup_server(ServerState* state);
  * @param state ServerState* struttura del server
  * @return void
  */
-void manage_new_connection(ServerState* state);
+void handle_new_connection(ServerState* state);
 
 /**
  * Gestisce un messaggio ricevuto da un client
@@ -51,7 +54,7 @@ void manage_new_connection(ServerState* state);
  * @param client_socket int socket del client
  * @return void
  */
-void handle_client_message(ServerState* state, int client_socket);
+void process_client_message(ServerState* state, int client_socket);
 
 /**
  * Gestisce le connessioni attive
@@ -79,10 +82,13 @@ void broadcast_message(ServerState* state, Message* msg);
  */
 void handle_disconnect(ServerState* state, int client_socket);
 
-// Funzioni quiz
 /**
  * Invia una domanda ad un client
+ * @param client_socket int socket del client
+ * @param quiz Quiz* quiz corrente
+ * @param question_num int numero della domanda
+ * @return void
  */
-void send_question(int client_socket, int question_num);
+void send_question_to_client(int client_socket, Quiz* quiz, int question_num);
 
 #endif
