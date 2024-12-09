@@ -85,49 +85,79 @@ int show_main_menu() {
 
 int show_quiz_selection() {
     char input[10];
-    
+    int choice;
+
     printf("\nQuiz disponibili\n");
     printf("++++++++++++++++++++++++++++++\n");
     printf("1 - Sport\n");
     printf("2 - Geografia\n");
     printf("++++++++++++++++++++++++++++++\n");
-    printf("La tua scelta: ");
-    
-    if (fgets(input, sizeof(input), stdin) == NULL) {
-        return 0;
-    }
-    
-    input[strcspn(input, "\n")] = 0;
-    return atoi(input);
+
+    do {
+        printf("La tua scelta: ");
+        
+        if (fgets(input, sizeof(input), stdin) == NULL) {
+            return 0;
+        }
+        
+        // Rimuove il newline
+        input[strcspn(input, "\n")] = 0;
+        
+        // Verifica se l'input è numerico
+        if (sscanf(input, "%d", &choice) != 1) {
+            printf("Per favore, inserisci 1 per Sport o 2 per Geografia.\n");
+            continue;
+        }
+        
+        // Verifica se il numero è valido (1 o 2)
+        if (choice != 1 && choice != 2) {
+            printf("Scelta non valida. Inserisci 1 per Sport o 2 per Geografia.\n");
+            continue;
+        }
+        
+        return choice;
+        
+    } while (1);
 }
 
 bool validate_and_send_nickname(ClientState* state) {
     Message msg;
-    printf("\nTrivia Quiz\n");
-    printf("+++++++++++++++++++++++++++++++++++++++++\n");
-    printf("Scegli un nickname (deve essere univoco): ");
-    
-    fgets(state->nickname, MAX_NICK_LENGTH, stdin);
-    state->nickname[strcspn(state->nickname, "\n")] = 0; // Rimuove newline
+    bool nickname_valid = false;
 
-    msg.type = MSG_LOGIN;
-    msg.length = strlen(state->nickname);
-    strncpy(msg.payload, state->nickname, MAX_MSG_LEN);
+    while (!nickname_valid) {
+        printf("\nTrivia Quiz\n");
+        printf("+++++++++++++++++++++++++++++++++++++++++\n");
+        printf("Scegli un nickname (deve essere univoco): ");
+        
+        fgets(state->nickname, MAX_NICK_LENGTH, stdin);
+        state->nickname[strcspn(state->nickname, "\n")] = 0; // Rimuove newline
 
-    // Invia il nickname al server
-    if (send_message(state->socket, &msg) < 0) {
-        return false;
-    }
+        msg.type = MSG_LOGIN;
+        msg.length = strlen(state->nickname);
+        strncpy(msg.payload, state->nickname, MAX_MSG_LEN);
 
-    // Attendi risposta dal server
-    if (receive_message(state->socket, &msg) < 0) {
-        return false;
-    }
+        // Invia il nickname al server
+        if (send_message(state->socket, &msg) < 0) {
+            return false;
+        }
 
-    // Se il server risponde con errore, il nickname è già preso
-    if (msg.type == MSG_ERROR) {
-        printf("%s\n", msg.payload);
-        return false;
+        // Attendi risposta dal server
+        if (receive_message(state->socket, &msg) < 0) {
+            return false;
+        }
+
+        // Se il server risponde con errore, il nickname è già preso
+        if (msg.type == MSG_ERROR_LOGIN) {
+            printf("%s\n", msg.payload);
+            continue; // Chiede di nuovo il nickname
+        }
+
+        if(msg.type == MSG_ERROR) {
+            printf("Errore nel server");
+            return false;
+        }
+
+        nickname_valid = true;
     }
 
     return true;

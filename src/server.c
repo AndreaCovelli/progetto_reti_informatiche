@@ -162,15 +162,14 @@ void process_client_message(ServerState* state, int client_socket) {
         case MSG_LOGIN:
             // Gestione login
             msg.payload[msg.length] = '\0';
-            if (find_player(state->players, msg.payload) == NULL) {
+            if (add_player(state->players, msg.payload)) {
                 strncpy(client->nickname, msg.payload, MAX_NICK_LENGTH - 1);
-                add_player(state->players, msg.payload);
-                
+
                 msg.type = MSG_ANSWER;
                 strcpy(msg.payload, "Login avvenuto con successo!");
                 msg.length = strlen(msg.payload);
             } else {
-                msg.type = MSG_ERROR;
+                msg.type = MSG_ERROR_LOGIN;
                 strcpy(msg.payload, "Nickname già preso, scegline un altro");
                 msg.length = strlen(msg.payload);
             }
@@ -216,7 +215,7 @@ void process_client_message(ServerState* state, int client_socket) {
                 client->is_playing = false;
 
                 Message complete_msg;
-                complete_msg.type = MSG_QUIZ_COMPLETED;  // o un nuovo tipo MSG_QUIZ_COMPLETED
+                complete_msg.type = MSG_QUIZ_COMPLETED;
                 complete_msg.length = strlen("Quiz completato!");
                 strncpy(complete_msg.payload, "Quiz completato!", MAX_MSG_LEN);
                 send_message(client_socket, &complete_msg);
@@ -239,6 +238,13 @@ void process_client_message(ServerState* state, int client_socket) {
         case MSG_QUIZ_COMPLETED:
             // Gestione quiz completato
             client->is_playing = false;
+
+            // Rimuovi il giocatore dalla lista
+            if (strlen(client_data[client_socket].nickname) > 0) {
+                remove_player(state->players, client_data[client_socket].nickname);
+            }
+
+
             break;
 
         case MSG_DISCONNECT:

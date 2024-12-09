@@ -13,7 +13,7 @@ char* format_scores(ServerState* state) {
     bool has_sport_scores = false;
     for (int i = 0; i < state->players->count; i++) {
         Player* p = &state->players->players[i];
-        if (p->sport_score > 0) {  // Mostra anche punteggi 0
+        if (p->sport_score >= 0) {  // Mostra anche punteggi 0
             offset += snprintf(score_buffer + offset, MAX_MSG_LEN - offset, 
                              "- %s: %d\n", p->nickname, p->sport_score);
             has_sport_scores = true;
@@ -21,7 +21,7 @@ char* format_scores(ServerState* state) {
     }
     if (!has_sport_scores) {
         offset += snprintf(score_buffer + offset, MAX_MSG_LEN - offset, 
-                         "Nessun giocatore ha ancora segnato punti\n");
+                         "Nessun giocatore ha ancora partecipato\n");
     }
 
     // Sezione Geografia
@@ -31,7 +31,7 @@ char* format_scores(ServerState* state) {
     bool has_geo_scores = false;
     for (int i = 0; i < state->players->count; i++) {
         Player* p = &state->players->players[i];
-        if (p->geography_score > 0) {  // Mostra anche punteggi 0
+        if (p->geography_score >= 0) {  // Mostra anche punteggi 0
             offset += snprintf(score_buffer + offset, MAX_MSG_LEN - offset, 
                              "- %s: %d\n", p->nickname, p->geography_score);
             has_geo_scores = true;
@@ -39,7 +39,7 @@ char* format_scores(ServerState* state) {
     }
     if (!has_geo_scores) {
         offset += snprintf(score_buffer + offset, MAX_MSG_LEN - offset, 
-                         "Nessun giocatore ha ancora segnato punti\n");
+                         "Nessun giocatore ha ancora partecipato\n");
     }
 
     // Quiz completati Sport

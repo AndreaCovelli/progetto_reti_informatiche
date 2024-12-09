@@ -25,6 +25,7 @@ typedef enum {
     MSG_ANSWER,
     MSG_SCORE,
     MSG_ERROR,
+    MSG_ERROR_LOGIN,
     MSG_DISCONNECT,
     MSG_QUIZ_COMPLETED
 } MessageType;
