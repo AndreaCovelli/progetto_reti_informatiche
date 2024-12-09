@@ -1,0 +1,25 @@
+Trivia Quiz 
+++++++++++++++++++++++++++++++++++++
+Menù:
+1 - Comincia una sessione di Trivia
+2 - Esci 
+++++++++++++++++++++++++++++++++++++
+La tua scelta:
+
+Quiz disponibili 
+++++++++++++++++++++++++++++++
+1 - Curiosità sulla tecnologia
+2 - Cultura Generale 
+++++++++++++++++++++++++++++++
+La tua scelta:
+
+Trivia Quiz 
++++++++++++++++++++++++++++++++++++++++++
+Scegli un nickname (deve essere univoco):
+
+Quiz - Curiosità sulla tecnologia 
++++++++++++++++++++++++++++++++++
+Quale azienda ha introdotto il primo 
+personal computer commerciale nel 
+1981?
+Risposta:

@@ -16,8 +16,6 @@ typedef struct {
     fd_set read_fds;
     int max_fd;
     PlayerArray* players;
-    WaitingClient waiting_queue[MAX_WAITING_CLIENTS];
-    int waiting_count;
 } ServerState;
 
 // Funzioni server
@@ -27,7 +25,7 @@ typedef struct {
  * @param ip indirizzo ip del server    
  * @param port porta del server
  * @note Initializes file descriptor sets for select().
- * Sets up read, write and error file descriptor sets for monitoring
+ * Inizializza read, write e error set
  * @return Restituisce la struttura ServerState inizializzata
  */
 ServerState* init_server(const char* ip, int port);
@@ -88,6 +86,3 @@ void handle_disconnect(ServerState* state, int client_socket);
 void send_question(int client_socket, int question_num);
 
 #endif
-
-
-

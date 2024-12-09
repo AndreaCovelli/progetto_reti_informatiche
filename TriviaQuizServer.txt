@@ -1,0 +1,23 @@
+Trivia Quiz 
+++++++++++++++++++++++++++++++
+Temi:
+1 - Curiosità sulla tecnologia
+2 - Cultura Generale 
+++++++++++++++++++++++++++++++
+
+Partecipanti (2) 
+- Pippo
+- Pluto
+
+Punteggio tema 1 
+- Pippo 3
+- Pluto 1
+
+Punteggio tema 2 
+- Pippo 1
+
+Quiz Tema 1 completato 
+- Pippo
+
+Quiz Tema 2 completato
+------

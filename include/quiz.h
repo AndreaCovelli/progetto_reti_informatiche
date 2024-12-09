@@ -20,6 +20,7 @@ typedef struct {
  * @param count Numero di domande
  * @param topic Nome del tema del quiz
  * @note Si utilizza un array dinamico per le domande
+ * perché il numero di domande può variare
  */
 typedef struct {
     Question* questions;
@@ -56,5 +57,12 @@ Question* get_question(Quiz* quiz, int question_num);
  * @return true se la risposta è corretta, false altrimenti
  */
 bool check_answer(Quiz* quiz, int question_num, const char* answer);
+
+/**
+ * Restituisce il numero di domande del quiz
+ * @param quiz Quiz* quiz
+ * @return numero di domande
+ */
+int get_question_count(Quiz* quiz);
 
 #endif

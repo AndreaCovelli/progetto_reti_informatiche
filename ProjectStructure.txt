@@ -1,11 +1,16 @@
 .
 ├── Makefile
 ├── ProjectStructure.txt
+├── TriviaQuizClient.png
+├── TriviaQuizClient.txt
+├── TriviaQuizServer.png
+├── TriviaQuizServer.txt
 ├── include
 │   ├── client.h
 │   ├── common.h
 │   ├── constants.h
 │   ├── player.h
+│   ├── quiz.h
 │   └── server.h
 ├── res
 │   ├── geography_quiz.txt
@@ -14,6 +19,7 @@
     ├── client.c
     ├── common.c
     ├── player.c
+    ├── quiz.c
     └── server.c
 
-4 directories, 13 files
+4 directories, 19 files

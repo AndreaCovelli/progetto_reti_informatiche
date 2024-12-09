@@ -5,11 +5,13 @@
 // Limiti di sistema
 #define FD_SETSIZE 1024
 #define MAX_CLIENTS (FD_SETSIZE - 2)  // -2 per server socket e stdin
-#define MAX_WAITING_CLIENTS 100
-#define ABSOLUTE_MAX_PLAYERS (MAX_CLIENTS + MAX_WAITING_CLIENTS)
+#define ABSOLUTE_MAX_PLAYERS (MAX_CLIENTS)
 
-// Limiti messaggi e buffer
+// Limiti buffer
 #define BUFFER_SIZE 1024
+#define LINE_BUFFER 256
+
+// Limiti messaggi
 #define MAX_MSG_LEN 512
 #define MAX_NICK_LENGTH 20
 #define MAX_QUESTIONS 5
@@ -23,6 +25,7 @@
 #define MSG_SCORE 4
 #define MSG_ERROR 5
 
+// Capacità iniziale dell'array di giocatori
 #define INITIAL_PLAYER_ARRAY_SIZE 10
 
 // Codici di stato/errore
