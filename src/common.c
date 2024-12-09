@@ -6,20 +6,22 @@
 #include <errno.h>
 
 int create_socket() {
+    // SOCK_STREAM --> TCP socket
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
         perror("Errore nella creazione del socket");
         return ERR_SOCKET;
     }
     
-    // Set socket options to allow address reuse
+    // Imposta le opzioni del socket per permettere
+    // il riutilizzo degli indirizzi e delle porte
     int opt = 1;
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
         perror("Errore nell'impostazione delle opzioni del socket");
         close(sock);
         return ERR_SOCKET;
     }
-    
+
     return sock;
 }
 
@@ -48,15 +50,22 @@ int setup_connection(const char* ip, int port) {
 
 ssize_t send_message(int sock, Message* msg) {
     if (!msg) return ERR_SEND;
+
+    /*
+        Si divide l'invio del messaggio in due parti con
+        l'header che viene inviato prima del payload perchè
+        contiene metadati importanti che influenzano
+        come il payload deve essere processato
+    */
     
-    // First send the message header (type and length)
+    // Prima invia l'header del messaggio
     ssize_t header_size = sizeof(msg->type) + sizeof(msg->length);
     ssize_t sent = send(sock, msg, header_size, 0);
     if (sent != header_size) {
         return ERR_SEND;
     }
     
-    // Then send the payload if there is one
+    // Poi invia il payload se presente
     if (msg->length > 0) {
         sent = send(sock, msg->payload, msg->length, 0);
         if (sent != msg->length) {

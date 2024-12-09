@@ -16,15 +16,19 @@ typedef struct {
 
 /**
  * Struttura di un quiz
- * @param questions Array di domande
- * @param count Numero di domande
+ * @param questions Array di tutte le domande disponibili
+ * @param selected Array delle domande selezionate
+ * @param total_count Numero di domande
+ * @param selected_count Numero di domande selezionate
  * @param topic Nome del tema del quiz
  * @note Si utilizza un array dinamico per le domande
  * perché il numero di domande può variare
  */
 typedef struct {
     Question* questions;
-    int count;
+    Question* selected; 
+    int total_count;
+    int selected_count;
     char topic[50];
 } Quiz;
 
@@ -64,5 +68,13 @@ bool check_answer(Quiz* quiz, int question_num, const char* answer);
  * @return numero di domande
  */
 int get_question_count(Quiz* quiz);
+
+/**
+ * Seleziona domande casuali per il quiz
+ * @param quiz Quiz* quiz
+ * @note L'inizializzazione del generatore di numeri casuali
+ * avviene nel main() del server
+ */
+void select_random_questions(Quiz* quiz);
 
 #endif

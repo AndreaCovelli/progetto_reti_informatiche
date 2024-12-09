@@ -53,10 +53,15 @@ void disconnect_from_server(ClientState* state) {
         msg.type = MSG_DISCONNECT;
         msg.length = 0;
         
-        // Tentiamo di avvisare il server, ma procediamo anche se fallisce
-        send_message(state->socket, &msg);
+        if (send_message(state->socket, &msg) < 0) {
+            fprintf(stderr, "Errore nell'invio del messaggio di disconnessione\n");
+        }
         
-        close(state->socket);
+        // Chiude il socket
+        if (close(state->socket) < 0) {
+            fprintf(stderr, "Errore nella chiusura del socket\n");
+        }
+        // Imposta il socket a -1 per indicare che non è più connesso
         state->socket = -1;
     }
 }

@@ -14,7 +14,8 @@
 // Limiti messaggi
 #define MAX_MSG_LEN 512
 #define MAX_NICK_LENGTH 20
-#define MAX_QUESTIONS 5
+#define QUESTIONS_PER_GAME 5
+#define MAX_QUESTIONS 100
 #define MAX_QUESTION_LENGTH 128
 #define MAX_ANSWER_LENGTH 64
 

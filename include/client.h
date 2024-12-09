@@ -33,6 +33,12 @@ void cleanup_client(ClientState* state);
  */
 bool connect_to_server(ClientState* state, int port);
 
+/**
+ * Disconnette il client dal server
+ * @param state struttura ClientState
+*/
+void disconnect_from_server(ClientState* state);
+
 // Funzioni di gestione del menu e dell'interfaccia
 /**
  * Mostra il menu principale

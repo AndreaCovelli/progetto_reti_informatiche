@@ -43,7 +43,7 @@ void cleanup_server(ServerState* state);
  * @param state ServerState* struttura del server
  * @return void
  */
-void handle_new_connection(ServerState* state);
+void manage_new_connection(ServerState* state);
 
 /**
  * Gestisce un messaggio ricevuto da un client

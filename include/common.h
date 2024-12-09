@@ -8,7 +8,15 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-// Struttura dei messaggi (COMMAND|LENGTH|PAYLOAD, | sta per concatena)
+/**
+ * Struttura per rappresentare un messaggio
+ * @param type tipo del messaggio
+ * @param length lunghezza del payload
+ * @param payload contenuto del messaggio
+ * @see constants.h per i tipi di messaggio
+ * @note COMMAND|LENGTH|PAYLOAD dove
+ * COMMAND e LENGHT fanno parte dell'header
+ */
 typedef struct {
     int type;
     int length;
@@ -35,7 +43,7 @@ int setup_connection(const char* ip, int port);
  * Invia un messaggio al socket
  * @param sock file descriptor del socket
  * @param msg messaggio da inviare
- * @return numero di byte inviati o -1 in caso di errore
+ * @return numero di byte inviati o ERR_SEND in caso di errore
  */
 ssize_t send_message(int sock, Message* msg);
 
