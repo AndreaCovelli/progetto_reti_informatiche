@@ -4,12 +4,18 @@
 #include "common.h"
 #include <stdbool.h>
 
-// Struttura per mantenere lo stato del client
+/**
+ * Struttura che rappresenta lo stato del client
+ * @param socket Socket di connessione al server
+ * @param nickname Nickname del giocatore
+ * @param current_quiz Quiz attualmente selezionato (1 per sport, 2 per geografia)
+ * @param current_question Numero della domanda corrente
+ */
 typedef struct {
-    int socket;                      // Socket di connessione al server
-    char nickname[MAX_NICK_LENGTH];  // Nickname del giocatore
-    int current_quiz;                // Quiz attualmente selezionato (1 per sport, 2 per geografia)
-    int current_question;            // Numero della domanda corrente
+    int socket;
+    char nickname[MAX_NICK_LENGTH];
+    int current_quiz;
+    int current_question;
 } ClientState;
 
 // Funzioni di inizializzazione e gestione del client

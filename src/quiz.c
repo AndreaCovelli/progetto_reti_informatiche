@@ -14,6 +14,10 @@ static bool parse_question_line(char* line, Question* question) {
     // Rimuovi eventuali spazi iniziali e finali
     while (*question_part == ' ') question_part++;
     while (*answer_part == ' ') answer_part++;
+
+    // Rimuovi eventuali newline dalla risposta
+    char* newline = strchr(answer_part, '\n');
+    if (newline) *newline = '\0';
     
     // Copia la domanda e la risposta nelle strutture
     strncpy(question->question, question_part, MAX_QUESTION_LENGTH - 1);
@@ -122,6 +126,7 @@ bool check_answer(Quiz* quiz, int question_num, const char* answer) {
         question_num < 0 || question_num >= quiz->selected_count) {
         return false;
     }
+    printf("Correct answer: %s\n", quiz->selected[question_num].correct_answer);
     // Confronta le stringhe ignorando maiuscole e minuscole
     return strcasecmp(quiz->selected[question_num].correct_answer, answer) == 0;
 }

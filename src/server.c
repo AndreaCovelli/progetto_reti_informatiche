@@ -153,8 +153,8 @@ void process_client_message(ServerState* state, int client_socket) {
         return;
     }
     
-    printf("DEBUG: Successfully received message type: %s, length: %d\n", 
-           message_type_to_string(msg.type), msg.length);
+    printf("DEBUG: Successfully received message type: %s, length: %d, payload: %s\n",
+           message_type_to_string(msg.type), msg.length, msg.payload);
     
     ClientData* client = &client_data[client_socket];
     
@@ -195,6 +195,7 @@ void process_client_message(ServerState* state, int client_socket) {
             msg.payload[msg.length] = '\0';
             
             bool correct = check_answer(quiz, client->current_question, msg.payload);
+            printf("DEBUG: Answer is %s\n", correct ? "correct" : "incorrect");
             Player* player = find_player(state->players, client->nickname);
             
             if (player) {
@@ -210,6 +211,12 @@ void process_client_message(ServerState* state, int client_socket) {
                 mark_quiz_as_completed(state->players, client->nickname, 
                                     client->current_quiz == 1);
                 client->is_playing = false;
+
+                Message complete_msg;
+                complete_msg.type = MSG_QUIZ_COMPLETED;  // o un nuovo tipo MSG_QUIZ_COMPLETED
+                complete_msg.length = strlen("Quiz completato!");
+                strncpy(complete_msg.payload, "Quiz completato!", MAX_MSG_LEN);
+                send_message(client_socket, &complete_msg);
             } else {
                 send_question_to_client(client_socket, quiz, client->current_question);
             }
@@ -224,6 +231,11 @@ void process_client_message(ServerState* state, int client_socket) {
             strncpy(msg.payload, scores, MAX_MSG_LEN - 1);
             msg.payload[MAX_MSG_LEN - 1] = '\0';
             send_message(client_socket, &msg);
+            break;
+        
+        case MSG_QUIZ_COMPLETED:
+            // Gestione quiz completato
+            client->is_playing = false;
             break;
 
         case MSG_DISCONNECT:

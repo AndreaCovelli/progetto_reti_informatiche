@@ -25,7 +25,8 @@ typedef enum {
     MSG_ANSWER,
     MSG_SCORE,
     MSG_ERROR,
-    MSG_DISCONNECT
+    MSG_DISCONNECT,
+    MSG_QUIZ_COMPLETED
 } MessageType;
 
 // Capacità iniziale dell'array di giocatori

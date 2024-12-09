@@ -154,17 +154,10 @@ bool answer_question(ClientState* state, const char* question) {
             return false;
         }
         
-        // Wait for and process server's response
-        if (receive_message(state->socket, &msg) < 0) {
-            return false;
-        }
-        
-        // Display the scores
-        printf("\nPunteggi:\n%s\n", msg.payload);
         return true;  // Continue the game
         
     } else if (strcmp(answer, "endquiz") == 0) {
-        msg.type = MSG_DISCONNECT;
+        msg.type = MSG_QUIZ_COMPLETED;
         msg.length = strlen("endquiz");
         strncpy(msg.payload, "endquiz", MAX_MSG_LEN);
         
@@ -173,8 +166,8 @@ bool answer_question(ClientState* state, const char* question) {
         }
 
         // Chiudiamo il socket corrente
-        close(state->socket);
-        state->socket = -1;
+        //close(state->socket);
+        //state->socket = -1;
         return false;  // Termina la sessione di gioco
     } else {
         msg.type = MSG_ANSWER;
@@ -207,6 +200,7 @@ bool play_game_session(ClientState* state) {
     }
 
     state->current_question = 0;
+    char current_question[MAX_QUESTION_LENGTH] = {0}; // Buffer per salvare la domanda corrente
 
     while (state->current_question < MAX_QUESTIONS) {
         if (receive_message(state->socket, &msg) < 0) {
@@ -215,16 +209,23 @@ bool play_game_session(ClientState* state) {
 
         switch (msg.type) {
             case MSG_QUESTION:
+                strncpy(current_question, msg.payload, MAX_QUESTION_LENGTH - 1); // Salva la domanda per la show score
                 if (!answer_question(state, msg.payload)) {
                     return false;
                 }
                 state->current_question++;
                 break;
             case MSG_SCORE:
-                printf("\nPunteggi:\n%s\n", msg.payload);
+                printf("\n%s\n", msg.payload);
+                if (!answer_question(state, current_question)) {
+                    return false;
+                }
                 break;
             case MSG_ERROR:
                 printf("\nErrore: %s\n", msg.payload);
+                return false;
+            case MSG_QUIZ_COMPLETED:
+                printf("\n%s\n", msg.payload);
                 return false;
             case MSG_DISCONNECT:
                 printf("\nIl server si è disconnesso. Il quiz è terminato.\n");
@@ -249,11 +250,13 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Errore nell'inizializzazione del client\n");
         return 1;
     }
-
+    
+    /*
     if (!connect_to_server(state, atoi(argv[1]))) {
         cleanup_client(state);
         return 1;
     }
+    */
 
     int choice;
     do {
