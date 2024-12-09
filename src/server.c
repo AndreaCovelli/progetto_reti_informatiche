@@ -110,6 +110,8 @@ void handle_new_connection(ServerState* state) {
         return;
     }
 
+    printf("DEBUG: New client socket: %d\n", client_socket);
+
     // Aggiungi il nuovo socket al set
     FD_SET(client_socket, &state->active_fds);
     if (client_socket > state->max_fd) {
@@ -118,13 +120,13 @@ void handle_new_connection(ServerState* state) {
 
     // Inizializza i dati del client
     memset(&client_data[client_socket], 0, sizeof(ClientData));
-    // Imposta il client come non in partita
     client_data[client_socket].is_playing = false;
 
     printf("Nuovo client connesso\n");
     char client_ip[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &(client_addr.sin_addr), client_ip, INET_ADDRSTRLEN);
-    printf("Indirizzo IP client: %s, Porta: %d\n", client_ip, ntohs(client_addr.sin_port));
+    printf("Indirizzo IP client: %s, Porta: %d\n", 
+           client_ip, ntohs(client_addr.sin_port));
 }
 
 void send_question_to_client(int client_socket, Quiz* quiz, int question_num) {
@@ -141,14 +143,19 @@ void send_question_to_client(int client_socket, Quiz* quiz, int question_num) {
 
 void process_client_message(ServerState* state, int client_socket) {
     Message msg;
-    ssize_t received = receive_message(client_socket, &msg);
+    printf("DEBUG: Attempting to receive message from client %d\n", client_socket);
     
+    ssize_t received = receive_message(client_socket, &msg);
     if (received <= 0) {
+        printf("DEBUG: Receive failed with code %zd\n", received);
         // Client disconnesso
         handle_disconnect(state, client_socket);
         return;
     }
-
+    
+    printf("DEBUG: Successfully received message type: %s, length: %d\n", 
+           message_type_to_string(msg.type), msg.length);
+    
     ClientData* client = &client_data[client_socket];
     
     switch (msg.type) {
@@ -172,13 +179,7 @@ void process_client_message(ServerState* state, int client_socket) {
 
         case MSG_QUESTION:
             // Gestione selezione quiz
-
-            /* 
-                Converte un carattere numerico ASCII in un valore numerico intero
-                sottraendo il valore ASCII di '0' (es. '1' - '0' = 49 - 48 = 1)
-            */
             client->current_quiz = msg.payload[0] - '0';
-
             client->current_question = 0;
             client->is_playing = true;
             
@@ -193,39 +194,49 @@ void process_client_message(ServerState* state, int client_socket) {
             Quiz* quiz = (client->current_quiz == 1) ? sport_quiz : geography_quiz;
             msg.payload[msg.length] = '\0';
             
-            if (strcmp(msg.payload, "show score") == 0) {
-                char* scores = format_scores(state);
-                msg.type = MSG_SCORE;
-                msg.length = strlen(scores);
-                strncpy(msg.payload, scores, MAX_MSG_LEN - 1);
-                msg.payload[MAX_MSG_LEN - 1] = '\0';
-                send_message(client_socket, &msg);
-                break;
-            } else {
-                bool correct = check_answer(quiz, client->current_question, msg.payload);
-                Player* player = find_player(state->players, client->nickname);
-                
-                if (player) {
-                    if (client->current_quiz == 1) {
-                        player->sport_score += correct ? 1 : 0;
-                    } else {
-                        player->geography_score += correct ? 1 : 0;
-                    }
-                }
-
-                client->current_question++;
-                if (client->current_question >= QUESTIONS_PER_GAME) {
-                    mark_quiz_as_completed(state->players, client->nickname, 
-                                        client->current_quiz == 1);
-                    client->is_playing = false;
+            bool correct = check_answer(quiz, client->current_question, msg.payload);
+            Player* player = find_player(state->players, client->nickname);
+            
+            if (player) {
+                if (client->current_quiz == 1) {
+                    player->sport_score += correct ? 1 : 0;
                 } else {
-                    send_question_to_client(client_socket, quiz, client->current_question);
+                    player->geography_score += correct ? 1 : 0;
                 }
             }
+
+            client->current_question++;
+            if (client->current_question >= QUESTIONS_PER_GAME) {
+                mark_quiz_as_completed(state->players, client->nickname, 
+                                    client->current_quiz == 1);
+                client->is_playing = false;
+            } else {
+                send_question_to_client(client_socket, quiz, client->current_question);
+            }
+            break;
+
+        case MSG_SCORE:
+            // Gestione richiesta punteggi
+            char* scores = format_scores(state);
+            printf("%s", scores);
+            msg.type = MSG_SCORE;
+            msg.length = strlen(scores);
+            strncpy(msg.payload, scores, MAX_MSG_LEN - 1);
+            msg.payload[MAX_MSG_LEN - 1] = '\0';
+            send_message(client_socket, &msg);
             break;
 
         case MSG_DISCONNECT:
             handle_disconnect(state, client_socket);
+            break;
+
+        case MSG_ERROR:
+            // I messaggi di errore vengono inviati solo dal server al client
+            printf("WARNING: Received unexpected MSG_ERROR from client\n");
+            break;
+
+        default:
+            printf("WARNING: Unhandled message type: %d\n", msg.type);
             break;
     }
 }
@@ -235,6 +246,8 @@ void handle_disconnect(ServerState* state, int client_socket) {
     if (strlen(client_data[client_socket].nickname) > 0) {
         remove_player(state->players, client_data[client_socket].nickname);
     }
+
+    printf("Client disconnesso\n");
 
     // Rimuovi il socket dal set
     FD_CLR(client_socket, &state->active_fds);

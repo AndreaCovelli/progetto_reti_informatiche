@@ -18,7 +18,7 @@
  * COMMAND e LENGHT fanno parte dell'header
  */
 typedef struct {
-    int type;
+    MessageType type;
     int length;
     char payload[MAX_MSG_LEN];
 } Message;
@@ -54,5 +54,12 @@ ssize_t send_message(int sock, Message* msg);
  * @return numero di byte ricevuti o -1 in caso di errore
  */
 ssize_t receive_message(int sock, Message* msg);
+
+/**
+ * Converte un MessageType in stringa
+ * @param type tipo del messaggio
+ * @return stringa rappresentante il tipo di messaggio
+ */
+const char* message_type_to_string(MessageType type);
 
 #endif

@@ -19,12 +19,14 @@
 #define MAX_ANSWER_LENGTH 64
 
 // Codici messaggi
-#define MSG_LOGIN 1
-#define MSG_QUESTION 2
-#define MSG_ANSWER 3
-#define MSG_SCORE 4
-#define MSG_ERROR 5
-#define MSG_DISCONNECT 6
+typedef enum {
+    MSG_LOGIN = 1,
+    MSG_QUESTION,
+    MSG_ANSWER,
+    MSG_SCORE,
+    MSG_ERROR,
+    MSG_DISCONNECT
+} MessageType;
 
 // Capacità iniziale dell'array di giocatori
 #define INITIAL_PLAYER_ARRAY_SIZE 10

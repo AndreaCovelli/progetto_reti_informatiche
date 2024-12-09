@@ -31,20 +31,16 @@ void cleanup_client(ClientState* state) {
 }
 
 bool connect_to_server(ClientState* state, int port) {
-    state->socket = create_socket();
-    if (state->socket < 0) {
-        fprintf(stderr, "Errore nella creazione del socket\n");
+    printf("DEBUG: Connecting to server on port %d\n", port);
+    
+    int sock = setup_connection("127.0.0.1", port);
+    if (sock < 0) {
+        fprintf(stderr, "Failed to connect to server\n");
         return false;
     }
-
-    // Connessione al server, indirizzo localhost
-    if (setup_connection("127.0.0.1", port) < 0) {
-        fprintf(stderr, "Errore nella connessione al server\n");
-        close(state->socket);
-        state->socket = -1;
-        return false;
-    }
-
+    
+    state->socket = sock;
+    printf("DEBUG: Connected with socket %d\n", state->socket);
     return true;
 }
 
@@ -92,8 +88,8 @@ int show_quiz_selection() {
     
     printf("\nQuiz disponibili\n");
     printf("++++++++++++++++++++++++++++++\n");
-    printf("1 - Curiosità sulla tecnologia\n");
-    printf("2 - Cultura Generale\n");
+    printf("1 - Sport\n");
+    printf("2 - Geografia\n");
     printf("++++++++++++++++++++++++++++++\n");
     printf("La tua scelta: ");
     
@@ -117,18 +113,24 @@ bool validate_and_send_nickname(ClientState* state) {
     msg.type = MSG_LOGIN;
     msg.length = strlen(state->nickname);
     strncpy(msg.payload, state->nickname, MAX_MSG_LEN);
-    printf("ciao");
-    // Invia il nickname al server con un messaggio di login
+
+    // Invia il nickname al server
     if (send_message(state->socket, &msg) < 0) {
         return false;
     }
-    printf("aiao");
+
     // Attendi risposta dal server
     if (receive_message(state->socket, &msg) < 0) {
         return false;
     }
 
-    return msg.type != MSG_ERROR;
+    // Se il server risponde con errore, il nickname è già preso
+    if (msg.type == MSG_ERROR) {
+        printf("%s\n", msg.payload);
+        return false;
+    }
+
+    return true;
 }
 
 bool answer_question(ClientState* state, const char* question) {
@@ -144,9 +146,36 @@ bool answer_question(ClientState* state, const char* question) {
     // Gestisce comandi speciali
     if (strcmp(answer, "show score") == 0) {
         msg.type = MSG_SCORE;
-        msg.length = 0;
+        //msg.type = MSG_ANSWER;
+        msg.length = strlen("show score");  // Set proper length
+        strncpy(msg.payload, "show score", MAX_MSG_LEN);  // Include the command in payload
+        
+        if (send_message(state->socket, &msg) < 0) {
+            return false;
+        }
+        
+        // Wait for and process server's response
+        if (receive_message(state->socket, &msg) < 0) {
+            return false;
+        }
+        
+        // Display the scores
+        printf("\nPunteggi:\n%s\n", msg.payload);
+        return true;  // Continue the game
+        
     } else if (strcmp(answer, "endquiz") == 0) {
-        return false;
+        msg.type = MSG_DISCONNECT;
+        msg.length = strlen("endquiz");
+        strncpy(msg.payload, "endquiz", MAX_MSG_LEN);
+        
+        if (send_message(state->socket, &msg) < 0) {
+            return false;
+        }
+
+        // Chiudiamo il socket corrente
+        close(state->socket);
+        state->socket = -1;
+        return false;  // Termina la sessione di gioco
     } else {
         msg.type = MSG_ANSWER;
         msg.length = strlen(answer);
@@ -228,20 +257,27 @@ int main(int argc, char *argv[]) {
 
     int choice;
     do {
-        choice = show_main_menu();
-        switch (choice) {
-            case 1:
-                if (validate_and_send_nickname(state)) {
-                    play_game_session(state);
+    choice = show_main_menu();
+    switch (choice) {
+        case 1:
+            // Se il socket è chiuso, riconnettiti
+            if (state->socket == -1) {
+                if (!connect_to_server(state, atoi(argv[1]))) {
+                    printf("Errore di connessione al server\n");
+                    break;
                 }
-                break;
-            case 2:
-                disconnect_from_server(state);
-                printf("Grazie per aver giocato!\n");
-                break;
-            default:
-                printf("Scelta non valida\n");
-                break;
+            }
+            if (validate_and_send_nickname(state)) {
+                play_game_session(state);
+            }
+            break;
+        case 2:
+            disconnect_from_server(state);
+            printf("Grazie per aver giocato!\n");
+            break;
+        default:
+            printf("Scelta non valida\n");
+            break;
         }
     } while (choice != 2);
 
