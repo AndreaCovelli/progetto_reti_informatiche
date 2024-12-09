@@ -3,14 +3,17 @@
 */
 
 #include "include/server.h"
-#include "include/common.h"
-
 
 int main(int argc, char* argv[]) {
     // Check command line arguments
-    if (argc != 3) {
-        fprintf(stderr, "Utilizzo: %s <IP address> <port>\n", argv[0]);
+    if (argc != 2) {
+        fprintf(stderr, "Utilizzo: %s <port>\n", argv[0]);
         return 1;
     }
+
+    fd_set master;
+    fd_set read_fds;
+
+    
 
 }

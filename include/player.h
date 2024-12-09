@@ -36,14 +36,14 @@ typedef struct {
  * @param capacity capacità iniziale dell'array
  * @return PlayerArray*
  */
-PlayerArray* create_player_array(int);
+PlayerArray* create_player_array(int capacity);
 
 /**
  * Libera la memoria allocata per l'array
  * @param array PlayerArray* da liberare
  * @return void
  */
-void free_player_array(PlayerArray*);
+void free_player_array(PlayerArray* array);
 
 /**
  * Aggiunge un giocatore all'array
@@ -51,7 +51,7 @@ void free_player_array(PlayerArray*);
  * @param nickname const char* nickname del giocatore
  * @return true se il giocatore è stato aggiunto, false altrimenti
  */
-bool add_player(PlayerArray*, const char*);
+bool add_player(PlayerArray* array, const char* nickname);
 
 /**
  * Rimuove un giocatore dall'array
@@ -59,7 +59,7 @@ bool add_player(PlayerArray*, const char*);
  * @param nickname const char* nickname
  * @return true se il giocatore è stato rimosso, false altrimenti
  */
-bool remove_player(PlayerArray*, const char*);
+bool remove_player(PlayerArray* array, const char* nickname);
 
 /**
  * Trova un giocatore nell'array
@@ -67,7 +67,7 @@ bool remove_player(PlayerArray*, const char*);
  * @param nickname const char* nickname del giocatore da cercare
  * @return Player* al giocatore se trovato, NULL altrimenti 
  */
-Player* find_player(PlayerArray*, const char*);
+Player* find_player(PlayerArray* array, const char* nickname);
 
 /**
  * Ordina i giocatori in base al punteggio
@@ -76,7 +76,7 @@ Player* find_player(PlayerArray*, const char*);
  * per il punteggio del quiz sullo sport, false per il quiz sulla geografia
  * @return void
  */
-void sort_players_by_score(PlayerArray*, bool);
+void sort_players_by_score(PlayerArray* array, bool sport_quiz);
 
 /**
  * Confronta due giocatori in base al punteggio
@@ -87,14 +87,14 @@ void sort_players_by_score(PlayerArray*, bool);
  * @return risultato del confronto per qsort
  * (valore negativo se a < b, 0 se a == b, valore positivo se a > b)
  */
-static int compare_players_by_score(const void*, const void*, bool);
+static int compare_players_by_score(const void* a, const void* b, bool sport_quiz);
 
 /**
  * Ottieni il numero di giocatori attivi
  * @param array PlayerArray* array di giocatori
  * @return numero di giocatori attivi
  */
-static int get_active_players_count(PlayerArray*);
+static int get_active_players_count(PlayerArray* array);
 
 /**
  * Ritorna true se il giocatore ha completato il quiz richiesto
@@ -104,7 +104,7 @@ static int get_active_players_count(PlayerArray*);
  * ha completato il quiz sullo sport, false per la geografia
  * @return true se il giocatore ha completato il quiz richiesto, false altrimenti
  */
-bool has_completed_quiz(PlayerArray*, const char*, bool);
+bool has_completed_quiz(PlayerArray* player, const char* nick_name, bool sport_quiz);
 
 /**
  * Segna il quiz richiesto come completato per il giocatore
@@ -114,6 +114,6 @@ bool has_completed_quiz(PlayerArray*, const char*, bool);
  * false per la geografia
  * @return void
  */
-void mark_quiz_as_completed(PlayerArray*, const char*, bool);
+void mark_quiz_as_completed(PlayerArray* array, const char* nickname, bool sport_quiz);
 
 #endif

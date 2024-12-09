@@ -1,6 +1,35 @@
 // File contenente le costanti
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
 
-#define QUIZ_DATA_PATH "./res/"
+// Limiti di sistema
+#define FD_SETSIZE 1024
+#define MAX_CLIENTS (FD_SETSIZE - 2)  // -2 per server socket e stdin
+#define MAX_WAITING_CLIENTS 100
+#define ABSOLUTE_MAX_PLAYERS (MAX_CLIENTS + MAX_WAITING_CLIENTS)
+
+// Limiti messaggi e buffer
+#define BUFFER_SIZE 1024
+#define MAX_MSG_LEN 512
 #define MAX_NICK_LENGTH 20
 #define MAX_QUESTIONS 5
-#define MAX_ANSWER_LENGTH 50
+#define MAX_QUESTION_LENGTH 128
+#define MAX_ANSWER_LENGTH 64
+
+// Codici messaggi
+#define MSG_LOGIN 1
+#define MSG_QUESTION 2
+#define MSG_ANSWER 3
+#define MSG_SCORE 4
+#define MSG_ERROR 5
+
+#define INITIAL_PLAYER_ARRAY_SIZE 10
+
+// Codici di stato/errore
+#define SUCCESS 0
+#define ERR_SOCKET -1
+#define ERR_CONNECT -2
+#define ERR_SEND -3
+#define ERR_RECV -4
+
+#endif
