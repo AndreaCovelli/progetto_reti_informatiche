@@ -84,6 +84,15 @@ Player* find_player(PlayerArray* array, const char* nickname) {
     return NULL;
 }
 
+/**
+ * Confronta due giocatori in base al punteggio
+ * @param a const void* puntatore al primo giocatore
+ * @param b const void* puntatore al secondo giocatore
+ * @param sport_quiz true se si vuole ordinare i giocatori 
+ * per il punteggio del quiz sullo sport, false per il quiz sulla geografia
+ * @return risultato del confronto per qsort
+ * (valore negativo se a < b, 0 se a == b, valore positivo se a > b)
+ */
 static int compare_players_by_score(const void* a, const void* b, bool sport_quiz) {
     const Player* player_a = (const Player*)a;
     const Player* player_b = (const Player*)b;
@@ -110,9 +119,11 @@ void sort_players_by_score(PlayerArray* array, bool sport_quiz) {
           sport_quiz ? compare_sport_score : compare_geography_score);
 }
 
+/*
 int get_active_players_count(PlayerArray* array) {
     return array ? array->count : 0;
 }
+*/
 
 bool has_completed_quiz(PlayerArray* array, const char* nickname, bool sport_quiz) {
     Player* player = find_player(array, nickname);

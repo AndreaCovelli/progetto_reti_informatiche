@@ -49,7 +49,7 @@ ServerState* init_server(const char* ip, int port) {
     struct sockaddr_in server_addr;
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = INADDR_ANY;
+    inet_pton(AF_INET, ip, &server_addr.sin_addr);
     server_addr.sin_port = htons(port);
 
     // Bind del socket
@@ -256,7 +256,7 @@ void broadcast_message(ServerState* state, Message* msg) {
     }
 }
 
-void handle_shutdown(int signum) {
+void handle_shutdown() {
     if (server_state) {
         // Prepara e invia il messaggio di chiusura a tutti i client
         Message msg;
@@ -318,7 +318,7 @@ int main(int argc, char* argv[]) {
                 if (i == state->server_socket) {
                     handle_new_connection(state);
                 } else {
-                    handle_client_message(state, i);
+                    process_client_message(state, i);
                 }
             }
         }

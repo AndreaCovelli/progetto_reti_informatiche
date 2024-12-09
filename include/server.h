@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "player.h"
+#include "quiz.h"
 #include <sys/select.h>
 
 /**

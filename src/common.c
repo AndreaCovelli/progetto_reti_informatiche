@@ -51,12 +51,7 @@ int setup_connection(const char* ip, int port) {
 ssize_t send_message(int sock, Message* msg) {
     if (!msg) return ERR_SEND;
 
-    /*
-        Si divide l'invio del messaggio in due parti con
-        l'header che viene inviato prima del payload perchè
-        contiene metadati importanti che influenzano
-        come il payload deve essere processato
-    */
+   
     
     // Prima invia l'header del messaggio
     ssize_t header_size = sizeof(msg->type) + sizeof(msg->length);
@@ -69,6 +64,36 @@ ssize_t send_message(int sock, Message* msg) {
     if (msg->length > 0) {
         sent = send(sock, msg->payload, msg->length, 0);
         if (sent != msg->length) {
+            return ERR_SEND;
+        }
+    }
+    
+    return sent + header_size;
+}
+
+ssize_t send_message(int sock, Message* msg) {
+    if (!msg) return ERR_SEND;
+
+    /*
+        Si divide l'invio del messaggio in due parti con
+        l'header che viene inviato prima del payload perchè
+        contiene metadati importanti che influenzano
+        come il payload deve essere processato
+    */
+    
+    printf("DEBUG: Sending message type: %d, length: %d\n", msg->type, msg->length);
+    
+    ssize_t header_size = sizeof(msg->type) + sizeof(msg->length);
+    ssize_t sent = send(sock, msg, header_size, 0);
+    if (sent != header_size) {
+        perror("Error sending header");
+        return ERR_SEND;
+    }
+    
+    if (msg->length > 0) {
+        sent = send(sock, msg->payload, msg->length, 0);
+        if (sent != msg->length) {
+            perror("Error sending payload");
             return ERR_SEND;
         }
     }

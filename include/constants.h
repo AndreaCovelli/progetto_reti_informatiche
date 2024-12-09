@@ -3,7 +3,6 @@
 #define CONSTANTS_H
 
 // Limiti di sistema
-#define FD_SETSIZE 1024
 #define MAX_CLIENTS (FD_SETSIZE - 4)  // -4 per socket ascolto e stdin/stdout/stderr
 #define ABSOLUTE_MAX_PLAYERS (MAX_CLIENTS)
 

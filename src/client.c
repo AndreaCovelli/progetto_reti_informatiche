@@ -117,12 +117,12 @@ bool validate_and_send_nickname(ClientState* state) {
     msg.type = MSG_LOGIN;
     msg.length = strlen(state->nickname);
     strncpy(msg.payload, state->nickname, MAX_MSG_LEN);
-
+    printf("ciao");
     // Invia il nickname al server con un messaggio di login
     if (send_message(state->socket, &msg) < 0) {
         return false;
     }
-
+    printf("aiao");
     // Attendi risposta dal server
     if (receive_message(state->socket, &msg) < 0) {
         return false;
@@ -186,7 +186,7 @@ bool play_game_session(ClientState* state) {
 
         switch (msg.type) {
             case MSG_QUESTION:
-                if (!process_question(state, msg.payload)) {
+                if (!answer_question(state, msg.payload)) {
                     return false;
                 }
                 state->current_question++;

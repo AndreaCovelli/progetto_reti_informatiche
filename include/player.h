@@ -79,22 +79,13 @@ Player* find_player(PlayerArray* array, const char* nickname);
 void sort_players_by_score(PlayerArray* array, bool sport_quiz);
 
 /**
- * Confronta due giocatori in base al punteggio
- * @param a const void* puntatore al primo giocatore
- * @param b const void* puntatore al secondo giocatore
- * @param sport_quiz true se si vuole ordinare i giocatori 
- * per il punteggio del quiz sullo sport, false per il quiz sulla geografia
- * @return risultato del confronto per qsort
- * (valore negativo se a < b, 0 se a == b, valore positivo se a > b)
- */
-static int compare_players_by_score(const void* a, const void* b, bool sport_quiz);
-
-/**
  * Ottieni il numero di giocatori attivi
  * @param array PlayerArray* array di giocatori
  * @return numero di giocatori attivi
  */
+/*
 static int get_active_players_count(PlayerArray* array);
+*/
 
 /**
  * Ritorna true se il giocatore ha completato il quiz richiesto

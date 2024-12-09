@@ -1,6 +1,7 @@
 # Compiler and flags
 CC = gcc
-CFLAGS = -Wall -Wextra -Iinclude
+CFLAGS = -Wall -Wextra -I.
+# oppure CFLAGS = -Wall -Wextra  # Se modifichiamo i file sorgente
 
 # Directories
 SRC_DIR = src
