@@ -196,6 +196,9 @@ bool play_game_session(ClientState* state) {
             case MSG_ERROR:
                 printf("\nErrore: %s\n", msg.payload);
                 return false;
+            case MSG_DISCONNECT:
+                printf("\nIl server si è disconnesso. Il quiz è terminato.\n");
+                return false;
             default:
                 printf("\n%s\n", msg.payload);
                 break;

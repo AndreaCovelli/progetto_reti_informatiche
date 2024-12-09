@@ -57,14 +57,6 @@ void handle_new_connection(ServerState* state);
 void process_client_message(ServerState* state, int client_socket);
 
 /**
- * Gestisce le connessioni attive
- * @param state ServerState* struttura del server
- * @return void
- * @note Rimuove eventuali client inattivi
- */
-void manage_connections(ServerState* state);
-
-/**
  * Invia un messaggio a tutti i client connessi
  * @param state ServerState* struttura del server
  * @param msg Message* messaggio da inviare
@@ -90,5 +82,12 @@ void handle_disconnect(ServerState* state, int client_socket);
  * @return void
  */
 void send_question_to_client(int client_socket, Quiz* quiz, int question_num);
+
+/**
+ * Formatta i punteggi di tutti i giocatori in una stringa
+ * @param state struttura ServerState contenente l'array dei giocatori
+ * @return stringa formattata contenente tutti i punteggi
+ */
+char* format_scores(ServerState* state);
 
 #endif

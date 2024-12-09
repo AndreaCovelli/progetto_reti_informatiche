@@ -4,12 +4,14 @@
 
 #include "include/server.h"
 #include "include/quiz.h"
+#include "include/score.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <signal.h>
 
 /**
  * Struttura per mantenere lo stato del client
@@ -29,6 +31,8 @@ typedef struct {
 static ClientData client_data[FD_SETSIZE];
 static Quiz* sport_quiz = NULL;
 static Quiz* geography_quiz = NULL;
+
+static ServerState* server_state = NULL;
 
 ServerState* init_server(const char* ip, int port) {
     ServerState* state = malloc(sizeof(ServerState));
@@ -168,7 +172,13 @@ void process_client_message(ServerState* state, int client_socket) {
 
         case MSG_QUESTION:
             // Gestione selezione quiz
+
+            /* 
+                Converte un carattere numerico ASCII in un valore numerico intero
+                sottraendo il valore ASCII di '0' (es. '1' - '0' = 49 - 48 = 1)
+            */
             client->current_quiz = msg.payload[0] - '0';
+
             client->current_question = 0;
             client->is_playing = true;
             
@@ -184,9 +194,13 @@ void process_client_message(ServerState* state, int client_socket) {
             msg.payload[msg.length] = '\0';
             
             if (strcmp(msg.payload, "show score") == 0) {
-                // Invia i punteggi
-                sort_players_by_score(state->players, client->current_quiz == 1);
-                // TODO: Formatta e invia i punteggi
+                char* scores = format_scores(state);
+                msg.type = MSG_SCORE;
+                msg.length = strlen(scores);
+                strncpy(msg.payload, scores, MAX_MSG_LEN - 1);
+                msg.payload[MAX_MSG_LEN - 1] = '\0';
+                send_message(client_socket, &msg);
+                break;
             } else {
                 bool correct = check_answer(quiz, client->current_question, msg.payload);
                 Player* player = find_player(state->players, client->nickname);
@@ -242,9 +256,28 @@ void broadcast_message(ServerState* state, Message* msg) {
     }
 }
 
+void handle_shutdown(int signum) {
+    if (server_state) {
+        // Prepara e invia il messaggio di chiusura a tutti i client
+        Message msg;
+        msg.type = MSG_DISCONNECT;
+        msg.length = strlen("Server shutdown");
+        strncpy(msg.payload, "Server shutdown", MAX_MSG_LEN - 1);
+        msg.payload[MAX_MSG_LEN - 1] = '\0';
+        
+        // Invia il messaggio di disconnessione a tutti i client
+        broadcast_message(server_state, &msg);
+        
+        // Pulisci le risorse
+        cleanup_server(server_state);
+    }
+    
+    exit(0);
+}
+
 int main(int argc, char* argv[]) {
     if (argc != 2) {
-        fprintf(stderr, "Utilizzo: %s <port>\n", argv[0]);
+        fprintf(stderr, "Utilizzo: %s <porta>\n", argv[0]);
         return 1;
     }
 
@@ -267,6 +300,10 @@ int main(int argc, char* argv[]) {
     }
 
     printf("Server avviato sulla porta %s\n", argv[1]);
+    
+    server_state = state;  // Salva il riferimento globale
+    signal(SIGINT, handle_shutdown);
+    signal(SIGTERM, handle_shutdown);
 
     while (1) {
         state->read_fds = state->active_fds;
