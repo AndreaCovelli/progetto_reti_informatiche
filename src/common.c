@@ -107,15 +107,19 @@ ssize_t receive_message(int sock, Message* msg) {
 const char* message_type_to_string(MessageType type) {
     switch(type) {
         case MSG_LOGIN: return "MSG_LOGIN";
+        case MSG_LOGIN_SUCCESS: return "MSG_LOGIN_SUCCESS";
+        case MSG_LOGIN_ERROR: return "MSG_LOGIN_ERROR";
+        case MSG_REQUEST_QUESTION: return "MSG_REQUEST_QUESTION";
         case MSG_QUESTION: return "MSG_QUESTION";
         case MSG_ANSWER: return "MSG_ANSWER";
         case MSG_ANSWER_RESULT: return "MSG_ANSWER_RESULT";
         case MSG_SCORE: return "MSG_SCORE";
         case MSG_QUIZ_COMPLETED: return "MSG_QUIZ_COMPLETED";
+        case MSG_QUIZ_AVAILABLE: return "MSG_QUIZ_AVAILABLE";
+        case MSG_TRIVIA_COMPLETED: return "MSG_TRIVIA_COMPLETED";
+        case MSG_END_QUIZ: return "MSG_END_QUIZ";
         case MSG_DISCONNECT: return "MSG_DISCONNECT";
         case MSG_ERROR: return "MSG_ERROR";
-        case MSG_ERROR_LOGIN: return "MSG_ERROR_LOGIN";
-        case MSG_QUIZ_AVAILABLE: return "MSG_QUIZ_AVAILABLE";
         default: return "UNKNOWN";
     }
 }

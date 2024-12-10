@@ -6,6 +6,14 @@ char* format_scores(ServerState* state) {
     static char score_buffer[MAX_MSG_LEN];
     int offset = 0;
 
+    // Sezione Partecipanti
+    offset += snprintf(score_buffer, MAX_MSG_LEN, 
+                      "Partecipanti:\n");
+    for (int i = 0; i < state->players->count; i++) {
+        offset += snprintf(score_buffer + offset, MAX_MSG_LEN - offset, 
+                         "- %s\n", state->players->players[i].nickname);
+    }
+
     // Sezione Sport
     offset += snprintf(score_buffer + offset, MAX_MSG_LEN - offset, 
                       "\nPunteggio Sport:\n");

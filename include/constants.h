@@ -18,18 +18,28 @@
 #define MAX_QUESTION_LENGTH 128
 #define MAX_ANSWER_LENGTH 64
 
-// Codici messaggi
+/**
+ * Tipi di messaggio
+ * @param MSG_LOGIN Messaggio di login (richiesta nickname)
+ * @param MSG_QUESTION Indica: questa è una domanda
+ * @param MSG_ANSWER Indica: questa è una risposta
+ * @param MSG_ANSWER_RESULT Risultato della risposta inviato al client
+ */
 typedef enum {
     MSG_LOGIN = 1,
+    MSG_LOGIN_SUCCESS,
+    MSG_LOGIN_ERROR,
+    MSG_REQUEST_QUESTION,
     MSG_QUESTION,
     MSG_ANSWER,
     MSG_ANSWER_RESULT,
     MSG_SCORE,
     MSG_QUIZ_COMPLETED,
+    MSG_QUIZ_AVAILABLE,
+    MSG_TRIVIA_COMPLETED,
+    MSG_END_QUIZ,
     MSG_DISCONNECT,
     MSG_ERROR,
-    MSG_ERROR_LOGIN,
-    MSG_QUIZ_AVAILABLE
 } MessageType;
 
 // Capacità iniziale dell'array di giocatori

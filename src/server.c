@@ -151,18 +151,19 @@ void process_client_message(ServerState* state, int client_socket) {
             if (add_player(state->players, msg.payload)) {
                 strncpy(client->nickname, msg.payload, MAX_NICK_LENGTH - 1);
 
-                msg.type = MSG_ANSWER;
+                msg.type = MSG_LOGIN_SUCCESS;
                 strcpy(msg.payload, "Login avvenuto con successo!");
                 msg.length = strlen(msg.payload);
             } else {
-                msg.type = MSG_ERROR_LOGIN;
+                msg.type = MSG_LOGIN_ERROR;
                 strcpy(msg.payload, "Nickname già preso, scegline un altro");
                 msg.length = strlen(msg.payload);
             }
             send_message(client_socket, &msg);
             break;
 
-        case MSG_QUESTION:
+        // il client chiede una domanda di un certo quiz
+        case MSG_REQUEST_QUESTION:
 
             // Verifica se il quiz selezionato è già stato completato
             bool sport_completed = has_completed_quiz(state->players, 
@@ -197,7 +198,7 @@ void process_client_message(ServerState* state, int client_socket) {
             send_question_to_client(client_socket, selected_quiz_ptr, 
                                 client->current_question);
             break;
-
+        // il client risponde a una domanda di un certo quiz
         case MSG_ANSWER:
             // Gestione risposta
             if (!client->is_playing) break;
@@ -250,7 +251,7 @@ void process_client_message(ServerState* state, int client_socket) {
                     snprintf(complete_msg.payload, MAX_MSG_LEN, 
                             "Hai completato tutti i quiz disponibili!\n\nPunteggi finali:\n%s", 
                             scores);
-                    
+                    complete_msg.type = MSG_TRIVIA_COMPLETED;
                     // Rimuovi il giocatore
                     remove_player(state->players, client->nickname);
                     
@@ -263,6 +264,7 @@ void process_client_message(ServerState* state, int client_socket) {
                 complete_msg.length = strlen(complete_msg.payload);
                 send_message(client_socket, &complete_msg);
             } else {
+                // Se ci sono altre domande, invia la prossima
                 send_question_to_client(client_socket, quiz, client->current_question);
             }
             break;
@@ -278,8 +280,8 @@ void process_client_message(ServerState* state, int client_socket) {
             send_message(client_socket, &msg);
             break;
         
-        case MSG_QUIZ_COMPLETED:
-            // Gestione quiz completato
+        case MSG_END_QUIZ:
+            // Gestione quiz terminato con endquiz
             client->is_playing = false;
 
             // Rimuovi il giocatore dalla lista
