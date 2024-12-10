@@ -23,11 +23,12 @@ typedef enum {
     MSG_LOGIN = 1,
     MSG_QUESTION,
     MSG_ANSWER,
+    MSG_ANSWER_RESULT,
     MSG_SCORE,
-    MSG_ERROR,
-    MSG_ERROR_LOGIN,
+    MSG_QUIZ_COMPLETED,
     MSG_DISCONNECT,
-    MSG_QUIZ_COMPLETED
+    MSG_ERROR,
+    MSG_ERROR_LOGIN
 } MessageType;
 
 // Capacità iniziale dell'array di giocatori

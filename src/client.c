@@ -209,6 +209,22 @@ bool answer_question(ClientState* state, const char* question) {
         return false;
     }
 
+    // Attende la risposta del server che indica se la risposta era corretta o errata
+    if (receive_message(state->socket, &msg) < 0) {
+        return false;
+    }
+
+    // Il server dovrebbe inviare un messaggio MSG_ANSWER con il risultato
+    if (msg.type == MSG_ANSWER_RESULT) {
+        printf("%s\n", msg.payload);
+    } else if (msg.type == MSG_ERROR) {
+        printf("Errore: %s\n", msg.payload);
+        return false;
+    } else {
+        printf("Messaggio inaspettato dal server\n");
+        return false;
+    }
+
     return true;
 }
 

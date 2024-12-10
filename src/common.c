@@ -109,10 +109,12 @@ const char* message_type_to_string(MessageType type) {
         case MSG_LOGIN: return "MSG_LOGIN";
         case MSG_QUESTION: return "MSG_QUESTION";
         case MSG_ANSWER: return "MSG_ANSWER";
+        case MSG_ANSWER_RESULT: return "MSG_ANSWER_RESULT";
         case MSG_SCORE: return "MSG_SCORE";
-        case MSG_ERROR: return "MSG_ERROR";
-        case MSG_DISCONNECT: return "MSG_DISCONNECT";
         case MSG_QUIZ_COMPLETED: return "MSG_QUIZ_COMPLETED";
+        case MSG_DISCONNECT: return "MSG_DISCONNECT";
+        case MSG_ERROR: return "MSG_ERROR";
+        case MSG_ERROR_LOGIN: return "MSG_ERROR_LOGIN";
         default: return "UNKNOWN";
     }
 }

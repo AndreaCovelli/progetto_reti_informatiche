@@ -199,6 +199,17 @@ void process_client_message(ServerState* state, int client_socket) {
             bool correct = check_answer(quiz, client->current_question, msg.payload);
             printf("DEBUG: Answer is %s\n", correct ? "correct" : "incorrect");
             Player* player = find_player(state->players, client->nickname);
+
+            // Invia il messaggio di risposta corretta/errata al client
+            Message response_msg;
+            response_msg.type = MSG_ANSWER_RESULT;
+            if (correct) {
+                strcpy(response_msg.payload, "Risposta corretta!");
+            } else {
+                strcpy(response_msg.payload, "Risposta errata!");
+            }
+            response_msg.length = strlen(response_msg.payload);
+            send_message(client_socket, &response_msg);
             
             if (player) {
                 if (client->current_quiz == 1) {
