@@ -13,20 +13,6 @@
 #include <stdbool.h>
 #include <signal.h>
 
-/**
- * Struttura per mantenere lo stato del client
- * @param nickname Nickname del giocatore
- * @param current_quiz Quiz attualmente selezionato (1 per sport, 2 per geografia)
- * @param current_question Numero della domanda corrente
- * @param is_playing Indica se il client è attualmente in partita
- */
-typedef struct {
-    char nickname[MAX_NICK_LENGTH];
-    int current_quiz;
-    int current_question;
-    bool is_playing;
-} ClientData;
-
 // Array per tenere traccia dei client connessi
 static ClientData client_data[FD_SETSIZE];
 static Quiz* sport_quiz = NULL;

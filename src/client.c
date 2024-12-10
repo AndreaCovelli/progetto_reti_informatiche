@@ -145,7 +145,8 @@ bool validate_and_send_nickname(ClientState* state) {
         if (receive_message(state->socket, &msg) < 0) {
             return false;
         }
-
+        printf("DEBUG: Received message type: %s, length: %d, payload: %s\n",
+               message_type_to_string(msg.type), msg.length, msg.payload);
         // Se il server risponde con errore, il nickname è già preso
         if (msg.type == MSG_ERROR_LOGIN) {
             printf("%s\n", msg.payload);
@@ -165,64 +166,74 @@ bool validate_and_send_nickname(ClientState* state) {
 
 bool answer_question(ClientState* state, const char* question) {
     char answer[MAX_ANSWER_LENGTH];
-    Message msg;
+    Message msg = {0};  // Inizializza a zero tutti i campi
 
+    // Mostra la domanda e richiedi la risposta
     printf("\nDomanda: %s\n", question);
     printf("Risposta (o 'show score' per vedere i punteggi, 'endquiz' per uscire): ");
     
-    fgets(answer, MAX_ANSWER_LENGTH, stdin);
+    // Leggi l'input dell'utente
+    if (!fgets(answer, MAX_ANSWER_LENGTH, stdin)) {
+        return false;
+    }
     answer[strcspn(answer, "\n")] = 0; // Rimuove newline
 
-    // Gestisce comandi speciali
+    // Prepara il messaggio base
     if (strcmp(answer, "show score") == 0) {
         msg.type = MSG_SCORE;
-        //msg.type = MSG_ANSWER;
-        msg.length = strlen("show score");  // Set proper length
-        strncpy(msg.payload, "show score", MAX_MSG_LEN);  // Include the command in payload
-        
-        if (send_message(state->socket, &msg) < 0) {
-            return false;
-        }
-        
-        return true;  // Continue the game
-        
     } else if (strcmp(answer, "endquiz") == 0) {
         msg.type = MSG_QUIZ_COMPLETED;
-        msg.length = strlen("endquiz");
-        strncpy(msg.payload, "endquiz", MAX_MSG_LEN);
-        
-        if (send_message(state->socket, &msg) < 0) {
-            return false;
-        }
-
-        // Chiudiamo il socket corrente
-        //close(state->socket);
-        //state->socket = -1;
-        return false;  // Termina la sessione di gioco
     } else {
         msg.type = MSG_ANSWER;
-        msg.length = strlen(answer);
-        strncpy(msg.payload, answer, MAX_MSG_LEN);
     }
 
-    if (send_message(state->socket, &msg) < 0) {
-        return false;
-    }
+    // Gestisci la risposta in base al tipo
+    switch (msg.type) {
+        case MSG_SCORE:
+            msg.length = strlen(answer);
+            strncpy(msg.payload, answer, MAX_MSG_LEN);
+            return send_message(state->socket, &msg) >= 0;
 
-    // Attende la risposta del server che indica se la risposta era corretta o errata
-    if (receive_message(state->socket, &msg) < 0) {
-        return false;
-    }
+        case MSG_QUIZ_COMPLETED:
+            msg.length = strlen(answer);
+            strncpy(msg.payload, answer, MAX_MSG_LEN);
+            if (send_message(state->socket, &msg) < 0) {
+                return false;
+            }
+            state->current_quiz = 0;  // Reset quiz state
+            return false;  // Segnala di terminare la sessione
 
-    // Il server dovrebbe inviare un messaggio MSG_ANSWER con il risultato
-    if (msg.type == MSG_ANSWER_RESULT) {
-        printf("%s\n", msg.payload);
-    } else if (msg.type == MSG_ERROR) {
-        printf("Errore: %s\n", msg.payload);
-        return false;
-    } else {
-        printf("Messaggio inaspettato dal server\n");
-        return false;
+        case MSG_ANSWER:
+            msg.length = strlen(answer);
+            strncpy(msg.payload, answer, MAX_MSG_LEN);
+            
+            // Invia la risposta
+            if (send_message(state->socket, &msg) < 0) {
+                return false;
+            }
+
+            // Attendi il risultato dal server
+            if (receive_message(state->socket, &msg) < 0) {
+                return false;
+            }
+
+            // Gestisci la risposta del server
+            switch (msg.type) {
+                case MSG_ANSWER_RESULT:
+                    printf("%s\n", msg.payload);
+                    return true;
+                case MSG_ERROR:
+                    printf("Errore: %s\n", msg.payload);
+                    return false;
+                default:
+                    printf("Messaggio inaspettato dal server (tipo: %s)\n", 
+                           message_type_to_string(msg.type));
+                    return false;
+            }
+        default:
+            printf("Messaggio inaspettato dal server (tipo: %s)\n", 
+                   message_type_to_string(msg.type));
+            return false;
     }
 
     return true;

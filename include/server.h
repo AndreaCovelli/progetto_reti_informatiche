@@ -22,6 +22,20 @@ typedef struct {
     PlayerArray* players;
 } ServerState;
 
+/**
+ * Struttura per mantenere lo stato del client
+ * @param nickname Nickname del giocatore
+ * @param current_quiz Quiz attualmente selezionato (1 per sport, 2 per geografia)
+ * @param current_question Numero della domanda corrente
+ * @param is_playing Indica se il client è attualmente in partita
+ */
+typedef struct {
+    char nickname[MAX_NICK_LENGTH];
+    int current_quiz;
+    int current_question;
+    bool is_playing;
+} ClientData;
+
 // Funzioni server
 
 /**
@@ -62,7 +76,7 @@ void process_client_message(ServerState* state, int client_socket);
  * @param state ServerState* struttura del server
  * @param msg Message* messaggio da inviare
  * @return void
- * @note Usata per aggiornamenti di stato o punteggi
+ * @note Usata per aggiornamenti di stato del server
  */
 void broadcast_message(ServerState* state, Message* msg);
 

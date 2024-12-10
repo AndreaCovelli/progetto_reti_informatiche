@@ -10,6 +10,7 @@ client
 server_debug
 client_debug
 domande_casuali_quiz.md
+repomix-output.txt
 
 # Log files
 *.log

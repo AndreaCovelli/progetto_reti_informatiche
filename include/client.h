@@ -74,7 +74,7 @@ bool validate_and_send_nickname(ClientState* state);
 bool play_game_session(ClientState* state);
 
 /**
- * Gestisce una singola domanda
+ * Gestisce la fase in cui il client risponde alle domande
  * @param state struttura ClientState
  * @param question testo della domanda
  * @return true se la risposta è stata inviata con successo
