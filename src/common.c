@@ -115,6 +115,7 @@ const char* message_type_to_string(MessageType type) {
         case MSG_DISCONNECT: return "MSG_DISCONNECT";
         case MSG_ERROR: return "MSG_ERROR";
         case MSG_ERROR_LOGIN: return "MSG_ERROR_LOGIN";
+        case MSG_QUIZ_AVAILABLE: return "MSG_QUIZ_AVAILABLE";
         default: return "UNKNOWN";
     }
 }

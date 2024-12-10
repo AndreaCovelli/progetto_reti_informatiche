@@ -231,18 +231,18 @@ bool answer_question(ClientState* state, const char* question) {
 bool play_game_session(ClientState* state) {
     Message msg;
     
-    state->current_quiz = show_quiz_selection();
-    if (state->current_quiz < 1 || state->current_quiz > 2) {
-        return false;
-    }
+    // Se non siamo in un quiz (prima volta o quiz appena terminato)
+    if (state->current_quiz == 0) {
+        state->current_quiz = show_quiz_selection();
 
-    // Invia scelta del quiz al server
-    msg.type = MSG_QUESTION;
-    msg.length = 1;
-    msg.payload[0] = state->current_quiz + '0';
-    
-    if (send_message(state->socket, &msg) < 0) {
-        return false;
+        // Invia scelta del quiz al server
+        msg.type = MSG_QUESTION;
+        msg.length = 1;
+        msg.payload[0] = state->current_quiz + '0';
+        
+        if (send_message(state->socket, &msg) < 0) {
+            return false;
+        }
     }
 
     state->current_question = 0;
@@ -267,12 +267,20 @@ bool play_game_session(ClientState* state) {
                     return false;
                 }
                 break;
+            case MSG_QUIZ_AVAILABLE:
+                printf("\n%s", msg.payload);
+                state->current_quiz = 0;  // Reset quiz selection
+                return play_game_session(state);  // Recursive call to select another quiz
             case MSG_ERROR:
                 printf("\nErrore: %s\n", msg.payload);
                 return false;
             case MSG_QUIZ_COMPLETED:
                 printf("\n%s\n", msg.payload);
-                return false;
+                state->current_quiz = 0;
+                if (msg.length > (int)strlen("Quiz completato!")) {
+                    return false; // Nessun altro quiz disponibile
+                }
+                return play_game_session(state);
             case MSG_DISCONNECT:
                 printf("\nIl server si è disconnesso. Il quiz è terminato.\n");
                 return false;

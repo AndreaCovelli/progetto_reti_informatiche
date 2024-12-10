@@ -177,16 +177,39 @@ void process_client_message(ServerState* state, int client_socket) {
             break;
 
         case MSG_QUESTION:
-            // Gestione selezione quiz
-            client->current_quiz = msg.payload[0] - '0';
+
+            // Verifica se il quiz selezionato è già stato completato
+            bool sport_completed = has_completed_quiz(state->players, 
+                                                    client->nickname, true);
+            bool geo_completed = has_completed_quiz(state->players, 
+                                                client->nickname, false);
+            
+            int selected_quiz = msg.payload[0] - '0';
+            
+            // Verifica se il quiz selezionato è già stato completato
+            if ((selected_quiz == 1 && sport_completed) || 
+                (selected_quiz == 2 && geo_completed)) {
+                msg.type = MSG_QUIZ_AVAILABLE;
+                char available[MAX_MSG_LEN];
+                snprintf(available, MAX_MSG_LEN, 
+                        "Quiz disponibili:\n%s%s",
+                        !sport_completed ? "1 - Sport\n" : "",
+                        !geo_completed ? "2 - Geografia\n" : "");
+                msg.length = strlen(available);
+                strncpy(msg.payload, available, MAX_MSG_LEN);
+                send_message(client_socket, &msg);
+                break;
+            }
+            
+            client->current_quiz = selected_quiz;
             client->current_question = 0;
             client->is_playing = true;
             
-            Quiz* selected_quiz = (client->current_quiz == 1) ? sport_quiz : geography_quiz;
-            // Generiamo un nuovo set di domande casuali per questo client
-            select_random_questions(selected_quiz);
-            // Inviamo la prima domanda
-            send_question_to_client(client_socket, selected_quiz, client->current_question);
+            Quiz* selected_quiz_ptr = (client->current_quiz == 1) ? 
+                                    sport_quiz : geography_quiz;
+            select_random_questions(selected_quiz_ptr);
+            send_question_to_client(client_socket, selected_quiz_ptr, 
+                                client->current_question);
             break;
 
         case MSG_ANSWER:
@@ -227,8 +250,21 @@ void process_client_message(ServerState* state, int client_socket) {
 
                 Message complete_msg;
                 complete_msg.type = MSG_QUIZ_COMPLETED;
-                complete_msg.length = strlen("Quiz completato!");
-                strncpy(complete_msg.payload, "Quiz completato!", MAX_MSG_LEN);
+
+                // Verifica se ci sono altri quiz disponibili
+                bool sport_completed = has_completed_quiz(state->players, 
+                                                        client->nickname, true);
+                bool geo_completed = has_completed_quiz(state->players, 
+                                                    client->nickname, false);
+                
+                if (sport_completed && geo_completed) {
+                    snprintf(complete_msg.payload, MAX_MSG_LEN, 
+                            "Quiz completato!\nHai completato tutti i quiz disponibili!");
+                } else {
+                    strcpy(complete_msg.payload, "Quiz completato!");
+                }
+                
+                complete_msg.length = strlen(complete_msg.payload);
                 send_message(client_socket, &complete_msg);
             } else {
                 send_question_to_client(client_socket, quiz, client->current_question);
