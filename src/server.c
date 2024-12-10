@@ -299,8 +299,9 @@ void process_client_message(ServerState* state, int client_socket) {
             // Rimuovi il giocatore dalla lista
             if (strlen(client_data[client_socket].nickname) > 0) {
                 remove_player(state->players, client_data[client_socket].nickname);
+                // Resetta completamente i dati del client
+                memset(&client_data[client_socket], 0, sizeof(ClientData));
             }
-
 
             break;
 
