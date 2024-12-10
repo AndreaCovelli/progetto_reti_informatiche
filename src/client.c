@@ -276,10 +276,14 @@ bool play_game_session(ClientState* state) {
                 return false;
             case MSG_QUIZ_COMPLETED:
                 printf("\n%s\n", msg.payload);
-                state->current_quiz = 0;
-                if (msg.length > (int)strlen("Quiz completato!")) {
-                    return false; // Nessun altro quiz disponibile
+                if (strstr(msg.payload, "Hai completato tutti i quiz disponibili!")) {
+                    // Il client ha completato tutti i quiz
+                    // Resetta lo stato e torna al menu principale
+                    state->current_quiz = 0;
+                    state->current_question = 0;
+                    return false;
                 }
+                state->current_quiz = 0;
                 return play_game_session(state);
             case MSG_DISCONNECT:
                 printf("\nIl server si è disconnesso. Il quiz è terminato.\n");

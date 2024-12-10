@@ -258,8 +258,18 @@ void process_client_message(ServerState* state, int client_socket) {
                                                     client->nickname, false);
                 
                 if (sport_completed && geo_completed) {
+                    // Il client ha completato entrambi i quiz
+                    // Prima invia i punteggi finali
+                    char* scores = format_scores(state);
                     snprintf(complete_msg.payload, MAX_MSG_LEN, 
-                            "Quiz completato!\nHai completato tutti i quiz disponibili!");
+                            "Hai completato tutti i quiz disponibili!\n\nPunteggi finali:\n%s", 
+                            scores);
+                    
+                    // Rimuovi il giocatore
+                    remove_player(state->players, client->nickname);
+                    
+                    // Resetta i dati del client
+                    memset(&client_data[client_socket], 0, sizeof(ClientData));
                 } else {
                     strcpy(complete_msg.payload, "Quiz completato!");
                 }
