@@ -100,6 +100,7 @@ ssize_t receive_message(int sock, Message* msg) {
         // Ensure null termination
         msg->payload[msg->length] = '\0';
     }
+    printf("Received message of type %s from device %d\n", message_type_to_string(msg->type), sock);
     
     return received + header_size;
 }
@@ -120,6 +121,9 @@ const char* message_type_to_string(MessageType type) {
         case MSG_END_QUIZ: return "MSG_END_QUIZ";
         case MSG_DISCONNECT: return "MSG_DISCONNECT";
         case MSG_ERROR: return "MSG_ERROR";
+        case MSG_REQUEST_NICKNAME: return "MSG_REQUEST_NICKNAME";
+        case MSG_NICKNAME_PROMPT: return "MSG_NICKNAME_PROMPT";
+        case MSG_REQUEST_SCORE: return "MSG_REQUEST_SCORE";
         default: return "UNKNOWN";
     }
 }

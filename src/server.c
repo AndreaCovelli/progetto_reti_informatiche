@@ -115,6 +115,61 @@ void handle_new_connection(ServerState* state) {
            client_ip, ntohs(client_addr.sin_port));
 }
 
+void send_nickname_prompt(int client_socket) {
+    Message msg;
+    msg.type = MSG_NICKNAME_PROMPT;
+    const char* prompt = "\nTrivia Quiz\n"
+                        "+++++++++++++++++++++++++++++++++++++++++\n"
+                        "Scegli un nickname (deve essere univoco): ";
+    msg.length = strlen(prompt);
+    strncpy(msg.payload, prompt, MAX_MSG_LEN);
+    send_message(client_socket, &msg);
+    //receive_message(client_socket, &msg);
+}
+
+void send_quiz_options(int client_socket) {
+    Message msg;
+    msg.type = MSG_QUIZ_AVAILABLE;
+    
+    // Get the client's nickname from the client_data array
+    const char* nickname = client_data[client_socket].nickname;
+    
+    // Check which quizzes the client has completed
+    bool sport_completed = has_completed_quiz(server_state->players, nickname, true);
+    bool geo_completed = has_completed_quiz(server_state->players, nickname, false);
+    
+    // Build the message with only available quizzes
+    char available[MAX_MSG_LEN];
+    int offset = snprintf(available, MAX_MSG_LEN,
+             "Quiz disponibili\n"
+             "++++++++++++++++++++++++++++++\n");
+             
+    // Add sport quiz option only if not completed
+    if (!sport_completed) {
+        offset += snprintf(available + offset, MAX_MSG_LEN - offset, "1 - Sport\n");
+    }
+    
+    // Add geography quiz option only if not completed 
+    if (!geo_completed) {
+        offset += snprintf(available + offset, MAX_MSG_LEN - offset, "2 - Geografia\n");
+    }
+    
+    // If all quizzes are completed, show a different message
+    if (sport_completed && geo_completed) {
+        snprintf(available, MAX_MSG_LEN,
+                "Non ci sono più quiz disponibili.\n"
+                "Hai completato tutti i quiz!\n");
+    } else {
+        // Add the closing border only if there are available quizzes
+        snprintf(available + offset, MAX_MSG_LEN - offset, 
+                "++++++++++++++++++++++++++++++\n");
+    }
+
+    msg.length = strlen(available);
+    strncpy(msg.payload, available, MAX_MSG_LEN);
+    send_message(client_socket, &msg);
+}
+
 void send_question_to_client(int client_socket, Quiz* quiz, int question_num) {
     Message msg;
     Question* question = get_question(quiz, question_num);
@@ -146,20 +201,27 @@ void process_client_message(ServerState* state, int client_socket) {
     
     switch (msg.type) {
         case MSG_LOGIN:
-            // Gestione login
+            // Invia il prompt per il nickname
+            send_nickname_prompt(client_socket);
+            break;
+        case MSG_REQUEST_NICKNAME:
+            // Process login...
             msg.payload[msg.length] = '\0';
             if (add_player(state->players, msg.payload)) {
                 strncpy(client->nickname, msg.payload, MAX_NICK_LENGTH - 1);
-
                 msg.type = MSG_LOGIN_SUCCESS;
                 strcpy(msg.payload, "Login avvenuto con successo!");
                 msg.length = strlen(msg.payload);
+                send_message(client_socket, &msg);
+                
+                // After successful login, send quiz options
+                send_quiz_options(client_socket);
             } else {
                 msg.type = MSG_LOGIN_ERROR;
                 strcpy(msg.payload, "Nickname già preso, scegline un altro");
                 msg.length = strlen(msg.payload);
+                send_message(client_socket, &msg);
             }
-            send_message(client_socket, &msg);
             break;
 
         // il client chiede una domanda di un certo quiz
@@ -177,14 +239,12 @@ void process_client_message(ServerState* state, int client_socket) {
             if ((selected_quiz == 1 && sport_completed) || 
                 (selected_quiz == 2 && geo_completed)) {
                 msg.type = MSG_QUIZ_AVAILABLE;
-                char available[MAX_MSG_LEN];
-                snprintf(available, MAX_MSG_LEN, 
-                        "Quiz disponibili:\n%s%s",
-                        !sport_completed ? "1 - Sport\n" : "",
-                        !geo_completed ? "2 - Geografia\n" : "");
-                msg.length = strlen(available);
-                strncpy(msg.payload, available, MAX_MSG_LEN);
+                printf("DEBUG: Quiz %d already completed\n", selected_quiz);
+                snprintf(msg.payload, MAX_MSG_LEN, 
+                    "Quiz non disponibile. Seleziona un quiz dalla lista.\n");
+                msg.length = strlen(msg.payload);
                 send_message(client_socket, &msg);
+                send_quiz_options(client_socket);
                 break;
             }
             
@@ -263,13 +323,16 @@ void process_client_message(ServerState* state, int client_socket) {
                 
                 complete_msg.length = strlen(complete_msg.payload);
                 send_message(client_socket, &complete_msg);
+
+                // Dopo aver inviato "Quiz completato", 
+                send_quiz_options(client_socket);
             } else {
                 // Se ci sono altre domande, invia la prossima
                 send_question_to_client(client_socket, quiz, client->current_question);
             }
             break;
 
-        case MSG_SCORE:
+        case MSG_REQUEST_SCORE:
             // Gestione richiesta punteggi
             char* scores = format_scores(state);
             printf("%s", scores);

@@ -83,15 +83,17 @@ int show_main_menu() {
     return atoi(input);
 }
 
-int show_quiz_selection() {
+int show_quiz_selection(ClientState* state) {
     char input[10];
-    int choice;
-
-    printf("\nQuiz disponibili\n");
-    printf("++++++++++++++++++++++++++++++\n");
-    printf("1 - Sport\n");
-    printf("2 - Geografia\n");
-    printf("++++++++++++++++++++++++++++++\n");
+    Message msg;
+    
+    // Receive available quizzes from server
+    if (receive_message(state->socket, &msg) < 0) {
+        return 0;
+    }
+    
+    // Display quiz options received from server
+    printf("\n%s", msg.payload);
 
     do {
         printf("La tua scelta: ");
@@ -103,6 +105,7 @@ int show_quiz_selection() {
         // Rimuove il newline
         input[strcspn(input, "\n")] = 0;
         
+        int choice;
         // Verifica se l'input è numerico
         if (sscanf(input, "%d", &choice) != 1) {
             printf("Per favore, inserisci 1 per Sport o 2 per Geografia.\n");
@@ -123,51 +126,56 @@ int show_quiz_selection() {
 bool validate_and_send_nickname(ClientState* state) {
     Message msg;
     bool nickname_valid = false;
-
+    printf("ciao\n");
+    msg.type = MSG_LOGIN;
+    msg.length = 0;  // Empty payload for initial request
+    if (send_message(state->socket, &msg) < 0) {
+        return false;
+    }
     while (!nickname_valid) {
-        printf("\nTrivia Quiz\n");
-        printf("+++++++++++++++++++++++++++++++++++++++++\n");
-        printf("Scegli un nickname (deve essere univoco): ");
-        
-        fgets(state->nickname, MAX_NICK_LENGTH, stdin);
-        state->nickname[strcspn(state->nickname, "\n")] = 0; // Rimuove newline
-
-        msg.type = MSG_LOGIN;
-        msg.length = strlen(state->nickname);
-        strncpy(msg.payload, state->nickname, MAX_MSG_LEN);
-
-        // Invia il nickname al server
-        if (send_message(state->socket, &msg) < 0) {
-            return false;
-        }
-
-        // Attendi risposta dal server
+        // Wait for server prompt
         if (receive_message(state->socket, &msg) < 0) {
             return false;
         }
-        printf("DEBUG: Received message type: %s, length: %d, payload: %s\n",
-               message_type_to_string(msg.type), msg.length, msg.payload);
-        // Se il server risponde con errore, il nickname è già preso
-        switch (msg.type) {
-            case MSG_LOGIN_SUCCESS:
-            printf("Benvenuto, %s!\n", state->nickname);
-            break;
+        if ( msg.type == MSG_NICKNAME_PROMPT){
 
-            case MSG_LOGIN_ERROR:
-            printf("%s\n", msg.payload);
-            continue; // Chiede di nuovo il nickname
+            // Display server's nickname prompt
+            printf("\n%s", msg.payload);
+            
+            fgets(state->nickname, MAX_NICK_LENGTH, stdin);
+            state->nickname[strcspn(state->nickname, "\n")] = 0; // Remove newline
 
-            case MSG_ERROR:
-            printf("Errore nel server\n");
-            return false;
+            msg.type = MSG_REQUEST_NICKNAME;
+            msg.length = strlen(state->nickname);
+            strncpy(msg.payload, state->nickname, MAX_MSG_LEN);
 
-            default:
-            printf("Messaggio inaspettato dal server (tipo: %s)\n", message_type_to_string(msg.type));
-            disconnect_from_server(state);
+            if (send_message(state->socket, &msg) < 0) {
+                return false;
+            }
+
+            // Wait for server response
+            if (receive_message(state->socket, &msg) < 0) {
+                return false;
+            }
+
+            switch (msg.type) {
+                case MSG_LOGIN_SUCCESS:
+                    printf("%s\n", msg.payload);
+                    nickname_valid = true;
+                    break;
+
+                case MSG_LOGIN_ERROR:
+                    printf("%s\n", msg.payload);
+                    break;
+
+                default:
+                    printf("Unexpected message from server\n");
+                    return false;
+            }
+        } else {
+            printf("Unexpected message from server\n");
             return false;
         }
-
-        nickname_valid = true;
     }
 
     return true;
@@ -189,16 +197,16 @@ bool answer_question(ClientState* state, const char* question) {
 
     // Prepara il messaggio base
     if (strcmp(answer, "show score") == 0) {
-        msg.type = MSG_SCORE;
+        msg.type = MSG_REQUEST_SCORE;
     } else if (strcmp(answer, "endquiz") == 0) {
         msg.type = MSG_END_QUIZ;
     } else {
         msg.type = MSG_ANSWER;
     }
 
-    // Gestisci la risposta in base al tipo
+    // Gestisci l'header in base all'input dell'utente
     switch (msg.type) {
-        case MSG_SCORE:
+        case MSG_REQUEST_SCORE:
             msg.length = strlen(answer);
             strncpy(msg.payload, answer, MAX_MSG_LEN);
             return send_message(state->socket, &msg) >= 0;
@@ -253,7 +261,7 @@ bool play_game_session(ClientState* state) {
     
     // Se non siamo in un quiz (prima volta o quiz appena terminato)
     if (state->current_quiz == 0) {
-        state->current_quiz = show_quiz_selection();
+        state->current_quiz = show_quiz_selection(state);
 
         // Invia scelta del quiz al server
         msg.type = MSG_REQUEST_QUESTION;

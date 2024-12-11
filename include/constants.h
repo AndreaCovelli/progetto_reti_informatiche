@@ -40,6 +40,9 @@ typedef enum {
     MSG_END_QUIZ,
     MSG_DISCONNECT,
     MSG_ERROR,
+    MSG_REQUEST_NICKNAME,
+    MSG_NICKNAME_PROMPT,
+    MSG_REQUEST_SCORE
 } MessageType;
 
 // Capacità iniziale dell'array di giocatori
