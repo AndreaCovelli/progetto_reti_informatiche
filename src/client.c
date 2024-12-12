@@ -50,15 +50,10 @@ void disconnect_from_server(ClientState* state) {
         msg.type = MSG_DISCONNECT;
         msg.length = 0;
         
-        if (send_message(state->socket, &msg) < 0) {
-            fprintf(stderr, "Errore nell'invio del messaggio di disconnessione\n");
-        }
+        // Only try to send disconnect message if we think the server is still up
+        send_message(state->socket, &msg); // Remove error message - it's expected if server is down
         
-        // Chiude il socket
-        if (close(state->socket) < 0) {
-            fprintf(stderr, "Errore nella chiusura del socket\n");
-        }
-        // Imposta il socket a -1 per indicare che non è più connesso
+        close(state->socket);
         state->socket = -1;
     }
 }
@@ -83,15 +78,12 @@ int show_main_menu() {
     return atoi(input);
 }
 
-int show_quiz_selection(ClientState* state) {
+int quiz_selection(ClientState* state) {
     char input[10];
     Message msg;
-    
-    // Receive available quizzes from server
-    if (receive_message(state->socket, &msg) < 0) {
-        return 0;
-    }
-    
+
+    int old_quiz = state->current_quiz;
+    printf("old quiz: %d\n", old_quiz);
     // Display quiz options received from server
     printf("\n%s", msg.payload);
 
@@ -117,6 +109,12 @@ int show_quiz_selection(ClientState* state) {
             printf("Scelta non valida. Inserisci 1 per Sport o 2 per Geografia.\n");
             continue;
         }
+
+        // Verifica se il quiz selezionato è già stato completato
+        if(old_quiz == choice){
+            printf("Hai già completato questo quiz. Scegli un altro quiz.\n");
+            continue;
+        }
         
         return choice;
         
@@ -126,15 +124,18 @@ int show_quiz_selection(ClientState* state) {
 bool validate_and_send_nickname(ClientState* state) {
     Message msg;
     bool nickname_valid = false;
-    printf("ciao\n");
+
     msg.type = MSG_LOGIN;
     msg.length = 0;  // Empty payload for initial request
+    strncpy(msg.payload, "", MAX_MSG_LEN);
     if (send_message(state->socket, &msg) < 0) {
         return false;
     }
     while (!nickname_valid) {
         // Wait for server prompt
         if (receive_message(state->socket, &msg) < 0) {
+            printf("Server disconnesso\n");
+            disconnect_from_server(state);
             return false;
         }
         if ( msg.type == MSG_NICKNAME_PROMPT){
@@ -258,26 +259,14 @@ bool answer_question(ClientState* state, const char* question) {
 
 bool play_game_session(ClientState* state) {
     Message msg;
-    
-    // Se non siamo in un quiz (prima volta o quiz appena terminato)
-    if (state->current_quiz == 0) {
-        state->current_quiz = show_quiz_selection(state);
-
-        // Invia scelta del quiz al server
-        msg.type = MSG_REQUEST_QUESTION;
-        msg.length = 1;
-        msg.payload[0] = state->current_quiz + '0';
-        
-        if (send_message(state->socket, &msg) < 0) {
-            return false;
-        }
-    }
 
     state->current_question = 0;
     char current_question[MAX_QUESTION_LENGTH] = {0}; // Buffer per salvare la domanda corrente
 
     while (state->current_question < MAX_QUESTIONS) {
         if (receive_message(state->socket, &msg) < 0) {
+            printf("Server disconnesso durante la sessione di gioco\n");
+            disconnect_from_server(state);
             return false;
         }
 
@@ -297,18 +286,32 @@ bool play_game_session(ClientState* state) {
                 break;
             case MSG_QUIZ_AVAILABLE: // il server ha notificato che è disponibile un altro quiz
                 printf("\n%s", msg.payload);
-                state->current_quiz = 0;  // Reset quiz selection
-                return play_game_session(state);  // Recursive call to select another quiz
+                state->current_quiz = quiz_selection(state);
+                printf("current quiz: %d\n", state->current_quiz);
+                // Invia scelta del quiz al server
+                msg.type = MSG_REQUEST_QUESTION;
+                msg.length = 1;
+                strncpy(msg.payload, "", MAX_MSG_LEN);
+                msg.payload[0] = state->current_quiz + '0';
+                
+                if (send_message(state->socket, &msg) < 0) {
+                    printf("Server disconnesso durante l'invio della scelta del quiz\n");
+                    disconnect_from_server(state);
+                    return false;
+                }
+                //state->current_quiz = 0;  // Reset quiz selection
+                break;
+                //return play_game_session(state);  // Recursive call to select another quiz
             case MSG_ERROR:
                 printf("\nErrore: %s\n", msg.payload);
                 return false;
             case MSG_QUIZ_COMPLETED:
                 printf("\n%s\n", msg.payload);
-                state->current_quiz = 0;
                 return play_game_session(state);
             case MSG_TRIVIA_COMPLETED:
                 // Il client ha completato tutti i quiz
                 // Resetta lo stato e torna al menu principale
+                printf("\n%s\n", msg.payload);
                 state->current_quiz = 0;
                 state->current_question = 0;
                 return false;
@@ -346,7 +349,7 @@ int main(int argc, char *argv[]) {
     int choice;
     do {
     choice = show_main_menu();
-    switch (choice) {
+        switch (choice) {
         case 1:
             // Se il socket è chiuso, riconnettiti
             if (state->socket == -1) {
@@ -355,8 +358,18 @@ int main(int argc, char *argv[]) {
                     break;
                 }
             }
-            if (validate_and_send_nickname(state)) {
-                play_game_session(state);
+            if (!validate_and_send_nickname(state)) {
+                // If validation fails due to server disconnect, make sure socket is closed
+                if (state->socket != -1) {
+                    disconnect_from_server(state);
+                }
+                break;  // Return to menu
+            }
+            if (!play_game_session(state)) {
+                // If game session fails due to server disconnect, make sure socket is closed
+                if (state->socket != -1) {
+                    disconnect_from_server(state);
+                }
             }
             break;
         case 2:

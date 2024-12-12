@@ -53,14 +53,14 @@ ssize_t send_message(int sock, Message* msg) {
     
     // Prima invia l'header del messaggio
     ssize_t header_size = sizeof(msg->type) + sizeof(msg->length);
-    ssize_t sent = send(sock, msg, header_size, 0);
+    ssize_t sent = send(sock, msg, header_size, MSG_NOSIGNAL);
     if (sent != header_size) {
         return ERR_SEND;
     }
     
     // Poi invia il payload se presente
     if (msg->length > 0) {
-        sent = send(sock, msg->payload, msg->length, 0);
+        sent = send(sock, msg->payload, msg->length, MSG_NOSIGNAL);
         if (sent != msg->length) {
             return ERR_SEND;
         }
@@ -72,7 +72,8 @@ ssize_t send_message(int sock, Message* msg) {
         contiene metadati importanti che influenzano
         come il payload deve essere processato
      */
-    
+    //printf("DEBUG: Sent type %s, length %d, payload %s\n", 
+    //       message_type_to_string(msg->type), msg->length, msg->payload);
     return sent + header_size;
 }
 
@@ -82,7 +83,8 @@ ssize_t receive_message(int sock, Message* msg) {
     // First receive the message header
     ssize_t header_size = sizeof(msg->type) + sizeof(msg->length);
     ssize_t received = recv(sock, msg, header_size, 0);
-    if (received != header_size) {
+    if (received <= 0) {  // Changed from != to <= to catch disconnection
+        printf("Server disconnesso\n");
         return ERR_RECV;
     }
     
@@ -93,14 +95,16 @@ ssize_t receive_message(int sock, Message* msg) {
         }
         
         received = recv(sock, msg->payload, msg->length, 0);
-        if (received != msg->length) {
+        if (received <= 0) {  // Changed from != to <= to catch disconnection
+            printf("Server disconnesso\n");
             return ERR_RECV;
         }
         
         // Ensure null termination
         msg->payload[msg->length] = '\0';
     }
-    printf("Received message of type %s from device %d\n", message_type_to_string(msg->type), sock);
+    printf("Received message of type %s from device %d\n", 
+           message_type_to_string(msg->type), sock);
     
     return received + header_size;
 }

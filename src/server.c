@@ -115,6 +115,33 @@ void handle_new_connection(ServerState* state) {
            client_ip, ntohs(client_addr.sin_port));
 }
 
+void display_server_status(ServerState* state) {
+    printf("\nStato del Server Trivia Quiz\n");
+    printf("++++++++++++++++++++++++++++\n");
+    
+    // Mostra i temi disponibili
+    printf("Temi disponibili:\n");
+    if (sport_quiz && sport_quiz->topic[0] != '\0') {
+        printf("1. %s\n", sport_quiz->topic);
+    }
+    if (geography_quiz && geography_quiz->topic[0] != '\0') {
+        printf("2. %s\n", geography_quiz->topic);
+    }
+    
+    // Mostra il numero e i nomi dei client connessi
+    printf("\nClient connessi (%d):\n", state->players->count);
+    
+    // Se ci sono client connessi, mostra i loro nickname
+    if (state->players->count > 0) {
+        for (int i = 0; i < state->players->count; i++) {
+            printf("- %s\n", state->players->players[i].nickname);
+        }
+    } else {
+        printf("Nessun client connesso\n");
+    }
+    printf("++++++++++++++++++++++++++++\n\n");
+}
+
 void send_nickname_prompt(int client_socket) {
     Message msg;
     msg.type = MSG_NICKNAME_PROMPT;
@@ -125,6 +152,12 @@ void send_nickname_prompt(int client_socket) {
     strncpy(msg.payload, prompt, MAX_MSG_LEN);
     send_message(client_socket, &msg);
     //receive_message(client_socket, &msg);
+}
+
+void show_quiz_selection(){
+    printf("Seleziona il quiz:\n"
+           "1 - Sport\n"
+           "2 - Geografia\n");
 }
 
 void send_quiz_options(int client_socket) {
@@ -258,7 +291,7 @@ void process_client_message(ServerState* state, int client_socket) {
             send_question_to_client(client_socket, selected_quiz_ptr, 
                                 client->current_question);
             break;
-        // il client risponde a una domanda di un certo quiz
+        // Il client risponde a una domanda di un certo quiz
         case MSG_ANSWER:
             // Gestione risposta
             if (!client->is_playing) break;
@@ -279,7 +312,10 @@ void process_client_message(ServerState* state, int client_socket) {
                 strcpy(response_msg.payload, "Risposta errata!");
             }
             response_msg.length = strlen(response_msg.payload);
-            send_message(client_socket, &response_msg);
+            if (send_message(client_socket, &response_msg) < 0) {
+                handle_disconnect(state, client_socket);
+                break;
+            }
             
             if (player) {
                 if (client->current_quiz == 1) {
@@ -306,15 +342,14 @@ void process_client_message(ServerState* state, int client_socket) {
                 
                 if (sport_completed && geo_completed) {
                     // Il client ha completato entrambi i quiz
-                    // Prima invia i punteggi finali
                     char* scores = format_scores(state);
+                    printf("%s", scores);
                     snprintf(complete_msg.payload, MAX_MSG_LEN, 
                             "Hai completato tutti i quiz disponibili!\n\nPunteggi finali:\n%s", 
                             scores);
                     complete_msg.type = MSG_TRIVIA_COMPLETED;
                     // Rimuovi il giocatore
                     remove_player(state->players, client->nickname);
-                    
                     // Resetta i dati del client
                     memset(&client_data[client_socket], 0, sizeof(ClientData));
                 } else {
@@ -322,10 +357,15 @@ void process_client_message(ServerState* state, int client_socket) {
                 }
                 
                 complete_msg.length = strlen(complete_msg.payload);
-                send_message(client_socket, &complete_msg);
+                if (send_message(client_socket, &complete_msg) < 0) {
+                    handle_disconnect(state, client_socket);
+                    break;
+                }
 
-                // Dopo aver inviato "Quiz completato", 
-                send_quiz_options(client_socket);
+                if (!sport_completed || !geo_completed) {
+                    // Send quiz options only if there are still available quizzes
+                    send_quiz_options(client_socket);
+                }
             } else {
                 // Se ci sono altre domande, invia la prossima
                 send_question_to_client(client_socket, quiz, client->current_question);
@@ -445,6 +485,8 @@ int main(int argc, char* argv[]) {
     printf("Server avviato sulla porta %s\n", argv[1]);
     
     server_state = state;  // Salva il riferimento globale
+    display_server_status(state);
+
     signal(SIGINT, handle_shutdown);
     signal(SIGTERM, handle_shutdown);
 
