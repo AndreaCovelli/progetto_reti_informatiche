@@ -3,10 +3,11 @@
 #define COMMON_H
 
 // Include necessari sia per il server che per i client
-#include "constants.h"
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include "constants.h"
+#include "debug.h"
 
 /**
  * Struttura per rappresentare un messaggio
@@ -14,8 +15,8 @@
  * @param length lunghezza del payload
  * @param payload contenuto del messaggio
  * @see constants.h per i tipi di messaggio
- * @note COMMAND|LENGTH|PAYLOAD dove
- * COMMAND e LENGTH fanno parte dell'header
+ * @note Un pachetto è composto da COMMAND|LENGTH|PAYLOAD
+ * dove COMMAND e LENGTH fanno parte dell'header
  */
 typedef struct {
     MessageType type;

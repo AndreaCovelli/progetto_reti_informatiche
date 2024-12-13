@@ -1,13 +1,14 @@
 /*
     Implementazione del client del Trivia Game
 */
-
-#include "include/client.h"
-#include "include/common.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "include/debug.h" 
+#include "include/client.h"
+#include "include/common.h"
 
 ClientState* init_client() {
     ClientState* state = malloc(sizeof(ClientState));
@@ -31,7 +32,7 @@ void cleanup_client(ClientState* state) {
 }
 
 bool connect_to_server(ClientState* state, int port) {
-    printf("DEBUG: Connecting to server on port %d\n", port);
+    DEBUG_PRINT("Connecting to server on port %d\n", port);
     
     int sock = setup_connection("127.0.0.1", port);
     if (sock < 0) {
@@ -40,7 +41,7 @@ bool connect_to_server(ClientState* state, int port) {
     }
     
     state->socket = sock;
-    printf("DEBUG: Connected with socket %d\n", state->socket);
+    DEBUG_PRINT("Connected with socket %d\n", state->socket);
     return true;
 }
 
@@ -50,8 +51,8 @@ void disconnect_from_server(ClientState* state) {
         msg.type = MSG_DISCONNECT;
         msg.length = 0;
         
-        // Only try to send disconnect message if we think the server is still up
-        send_message(state->socket, &msg); // Remove error message - it's expected if server is down
+        // Prova a inviare il messaggio di disconnessione se il socket è ancora attivo
+        send_message(state->socket, &msg);
         
         close(state->socket);
         state->socket = -1;
@@ -80,12 +81,9 @@ int show_main_menu() {
 
 int quiz_selection(ClientState* state) {
     char input[10];
-    Message msg;
 
     int old_quiz = state->current_quiz;
-    printf("old quiz: %d\n", old_quiz);
-    // Display quiz options received from server
-    printf("\n%s", msg.payload);
+    DEBUG_PRINT("old quiz: %d\n", old_quiz);
 
     do {
         printf("La tua scelta: ");
@@ -126,25 +124,25 @@ bool validate_and_send_nickname(ClientState* state) {
     bool nickname_valid = false;
 
     msg.type = MSG_LOGIN;
-    msg.length = 0;  // Empty payload for initial request
+    msg.length = 0;  // Payload vuoto per il login
     strncpy(msg.payload, "", MAX_MSG_LEN);
     if (send_message(state->socket, &msg) < 0) {
         return false;
     }
     while (!nickname_valid) {
-        // Wait for server prompt
+        // Attendi il prompt del server per il nickname
         if (receive_message(state->socket, &msg) < 0) {
             printf("Server disconnesso\n");
             disconnect_from_server(state);
             return false;
         }
-        if ( msg.type == MSG_NICKNAME_PROMPT){
+        if (msg.type == MSG_NICKNAME_PROMPT){
 
-            // Display server's nickname prompt
+            // Mostra il prompt di inserimento del nickname
             printf("\n%s", msg.payload);
             
             fgets(state->nickname, MAX_NICK_LENGTH, stdin);
-            state->nickname[strcspn(state->nickname, "\n")] = 0; // Remove newline
+            state->nickname[strcspn(state->nickname, "\n")] = 0; // Rimuove newline
 
             msg.type = MSG_REQUEST_NICKNAME;
             msg.length = strlen(state->nickname);
@@ -154,7 +152,6 @@ bool validate_and_send_nickname(ClientState* state) {
                 return false;
             }
 
-            // Wait for server response
             if (receive_message(state->socket, &msg) < 0) {
                 return false;
             }
@@ -184,7 +181,7 @@ bool validate_and_send_nickname(ClientState* state) {
 
 bool answer_question(ClientState* state, const char* question) {
     char answer[MAX_ANSWER_LENGTH];
-    Message msg = {0};  // Inizializza a zero tutti i campi
+    Message msg = {0}; // Inizializza a zero tutti i campi
 
     // Mostra la domanda e richiedi la risposta
     printf("\nDomanda: %s\n", question);
@@ -218,7 +215,7 @@ bool answer_question(ClientState* state, const char* question) {
             if (send_message(state->socket, &msg) < 0) {
                 return false;
             }
-            state->current_quiz = 0;  // Reset quiz state
+            state->current_quiz = 0;  // Resetta lo stato del quiz corrente
             return false;  // Segnala di terminare la sessione
 
         case MSG_ANSWER:
@@ -238,6 +235,7 @@ bool answer_question(ClientState* state, const char* question) {
             // Gestisci la risposta del server
             switch (msg.type) {
                 case MSG_ANSWER_RESULT:
+                    // Stampa l'esito della risposta
                     printf("%s\n", msg.payload);
                     return true;
                 case MSG_ERROR:
@@ -279,6 +277,7 @@ bool play_game_session(ClientState* state) {
                 state->current_question++;
                 break;
             case MSG_SCORE:
+                // Stampa i punteggi
                 printf("\n%s\n", msg.payload);
                 if (!answer_question(state, current_question)) {
                     return false;
@@ -287,7 +286,8 @@ bool play_game_session(ClientState* state) {
             case MSG_QUIZ_AVAILABLE: // il server ha notificato che è disponibile un altro quiz
                 printf("\n%s", msg.payload);
                 state->current_quiz = quiz_selection(state);
-                printf("current quiz: %d\n", state->current_quiz);
+                DEBUG_PRINT("current quiz: %d\n", state->current_quiz);
+
                 // Invia scelta del quiz al server
                 msg.type = MSG_REQUEST_QUESTION;
                 msg.length = 1;
@@ -309,8 +309,9 @@ bool play_game_session(ClientState* state) {
                 printf("\n%s\n", msg.payload);
                 return play_game_session(state);
             case MSG_TRIVIA_COMPLETED:
-                // Il client ha completato tutti i quiz
-                // Resetta lo stato e torna al menu principale
+                /* Il client ha completato tutti i quiz
+                   Resetta lo stato e torna al menu principale
+                   Stampa i punteggi finali */
                 printf("\n%s\n", msg.payload);
                 state->current_quiz = 0;
                 state->current_question = 0;
@@ -338,13 +339,6 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Errore nell'inizializzazione del client\n");
         return 1;
     }
-    
-    /*
-    if (!connect_to_server(state, atoi(argv[1]))) {
-        cleanup_client(state);
-        return 1;
-    }
-    */
 
     int choice;
     do {
@@ -359,14 +353,14 @@ int main(int argc, char *argv[]) {
                 }
             }
             if (!validate_and_send_nickname(state)) {
-                // If validation fails due to server disconnect, make sure socket is closed
+                // Se il login fallisce, disconnettiti dal server e torna al menu
                 if (state->socket != -1) {
                     disconnect_from_server(state);
                 }
-                break;  // Return to menu
+                break;
             }
             if (!play_game_session(state)) {
-                // If game session fails due to server disconnect, make sure socket is closed
+                // Se la sessione di gioco fallisce, disconnettiti dal server
                 if (state->socket != -1) {
                     disconnect_from_server(state);
                 }

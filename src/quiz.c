@@ -51,6 +51,7 @@ void select_random_questions(Quiz* quiz) {
     }
     
     quiz->selected_count = 0;
+
     // Seleziona QUESTIONS_PER_GAME domande casuali
     while (quiz->selected_count < QUESTIONS_PER_GAME) {
         int idx = rand() % quiz->total_count;
@@ -130,7 +131,7 @@ bool check_answer(Quiz* quiz, int question_num, const char* answer) {
         question_num < 0 || question_num >= quiz->selected_count) {
         return false;
     }
-    printf("Correct answer: %s\n", quiz->selected[question_num].correct_answer);
+    DEBUG_PRINT("Correct answer: %s\n", quiz->selected[question_num].correct_answer);
     // Confronta le stringhe ignorando maiuscole e minuscole
     return strcasecmp(quiz->selected[question_num].correct_answer, answer) == 0;
 }

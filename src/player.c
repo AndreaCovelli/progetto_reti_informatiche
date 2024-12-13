@@ -92,6 +92,7 @@ Player* find_player(PlayerArray* array, const char* nickname) {
  * per il punteggio del quiz sullo sport, false per il quiz sulla geografia
  * @return risultato del confronto per qsort
  * (valore negativo se a < b, 0 se a == b, valore positivo se a > b)
+ * @note Questa funzione è utilizzata internamente da qsort
  */
 static int compare_players_by_score(const void* a, const void* b, bool sport_quiz) {
     const Player* player_a = (const Player*)a;
@@ -102,11 +103,22 @@ static int compare_players_by_score(const void* a, const void* b, bool sport_qui
     
     return score_b - score_a;
 }
-
+/**
+ * Confronta due giocatori in base al punteggio dello sport
+ * @param a const void* puntatore al primo giocatore
+ * @param b const void* puntatore al secondo giocatore
+ * @return risultato del confronto per qsort
+*/
 static int compare_sport_score(const void* a, const void* b) {
     return compare_players_by_score(a, b, true);
 }
 
+/**
+ * Confronta due giocatori in base al punteggio della geografia
+ * @param a const void* puntatore al primo giocatore
+ * @param b const void* puntatore al secondo giocatore
+ * @return risultato del confronto per qsort
+ */
 static int compare_geography_score(const void* a, const void* b) {
     return compare_players_by_score(a, b, false);
 }

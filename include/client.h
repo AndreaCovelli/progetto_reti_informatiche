@@ -48,15 +48,9 @@ void disconnect_from_server(ClientState* state);
 // Funzioni di gestione del menu e dell'interfaccia
 /**
  * Mostra il menu principale
- * @return scelta dell'utente
+ * @return int, scelta dell'utente
  */
 int show_main_menu();
-
-/**
- * Mostra il menu di selezione del quiz
- * @return scelta dell'utente
- */
-int show_quiz_selection();
 
 /**
  * Gestisce l'input del nickname

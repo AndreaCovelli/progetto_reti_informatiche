@@ -15,9 +15,12 @@
 
 // Array per tenere traccia dei client connessi
 static ClientData client_data[FD_SETSIZE];
+
+// Quiz disponibili
 static Quiz* sport_quiz = NULL;
 static Quiz* geography_quiz = NULL;
 
+// Stato del server
 static ServerState* server_state = NULL;
 
 ServerState* init_server(const char* ip, int port) {
@@ -96,7 +99,7 @@ void handle_new_connection(ServerState* state) {
         return;
     }
 
-    printf("DEBUG: New client socket: %d\n", client_socket);
+    DEBUG_PRINT("New client socket: %d\n", client_socket);
 
     // Aggiungi il nuovo socket al set
     FD_SET(client_socket, &state->active_fds);
@@ -116,7 +119,7 @@ void handle_new_connection(ServerState* state) {
 }
 
 void display_server_status(ServerState* state) {
-    printf("\nStato del Server Trivia Quiz\n");
+    printf("\nStato Server Trivia Quiz\n");
     printf("++++++++++++++++++++++++++++\n");
     
     // Mostra i temi disponibili
@@ -151,27 +154,20 @@ void send_nickname_prompt(int client_socket) {
     msg.length = strlen(prompt);
     strncpy(msg.payload, prompt, MAX_MSG_LEN);
     send_message(client_socket, &msg);
-    //receive_message(client_socket, &msg);
-}
-
-void show_quiz_selection(){
-    printf("Seleziona il quiz:\n"
-           "1 - Sport\n"
-           "2 - Geografia\n");
 }
 
 void send_quiz_options(int client_socket) {
     Message msg;
     msg.type = MSG_QUIZ_AVAILABLE;
     
-    // Get the client's nickname from the client_data array
+    // Ottieni il nickname dell'array dei client
     const char* nickname = client_data[client_socket].nickname;
     
-    // Check which quizzes the client has completed
+    // Controlla quali quiz sono già stati completati da questo giocatore (nickname)
     bool sport_completed = has_completed_quiz(server_state->players, nickname, true);
     bool geo_completed = has_completed_quiz(server_state->players, nickname, false);
     
-    // Build the message with only available quizzes
+    // Costruisci il messaggio con i quiz disponibili
     char available[MAX_MSG_LEN];
     int offset = snprintf(available, MAX_MSG_LEN,
              "Quiz disponibili\n"
@@ -217,18 +213,15 @@ void send_question_to_client(int client_socket, Quiz* quiz, int question_num) {
 
 void process_client_message(ServerState* state, int client_socket) {
     Message msg;
-    printf("DEBUG: Attempting to receive message from client %d\n", client_socket);
+    DEBUG_PRINT("Attempting to receive message from client %d\n", client_socket);
     
     ssize_t received = receive_message(client_socket, &msg);
     if (received <= 0) {
-        printf("DEBUG: Receive failed with code %zd\n", received);
+        DEBUG_PRINT("Receive failed with code %zd\n", received);
         // Client disconnesso
         handle_disconnect(state, client_socket);
         return;
     }
-    
-    printf("DEBUG: Successfully received message type: %s, length: %d, payload: %s\n",
-           message_type_to_string(msg.type), msg.length, msg.payload);
     
     ClientData* client = &client_data[client_socket];
     
@@ -247,9 +240,10 @@ void process_client_message(ServerState* state, int client_socket) {
                 msg.length = strlen(msg.payload);
                 send_message(client_socket, &msg);
                 
-                // After successful login, send quiz options
+                // Dopo un login riuscito, invia i quiz disponibili
                 send_quiz_options(client_socket);
             } else {
+                // Errore, nickname già preso
                 msg.type = MSG_LOGIN_ERROR;
                 strcpy(msg.payload, "Nickname già preso, scegline un altro");
                 msg.length = strlen(msg.payload);
@@ -257,7 +251,7 @@ void process_client_message(ServerState* state, int client_socket) {
             }
             break;
 
-        // il client chiede una domanda di un certo quiz
+        // Il client chiede una domanda di un certo quiz
         case MSG_REQUEST_QUESTION:
 
             // Verifica se il quiz selezionato è già stato completato
@@ -272,7 +266,7 @@ void process_client_message(ServerState* state, int client_socket) {
             if ((selected_quiz == 1 && sport_completed) || 
                 (selected_quiz == 2 && geo_completed)) {
                 msg.type = MSG_QUIZ_AVAILABLE;
-                printf("DEBUG: Quiz %d already completed\n", selected_quiz);
+                DEBUG_PRINT("Quiz %d already completed\n", selected_quiz);
                 snprintf(msg.payload, MAX_MSG_LEN, 
                     "Quiz non disponibile. Seleziona un quiz dalla lista.\n");
                 msg.length = strlen(msg.payload);
@@ -291,6 +285,7 @@ void process_client_message(ServerState* state, int client_socket) {
             send_question_to_client(client_socket, selected_quiz_ptr, 
                                 client->current_question);
             break;
+
         // Il client risponde a una domanda di un certo quiz
         case MSG_ANSWER:
             // Gestione risposta
@@ -300,7 +295,7 @@ void process_client_message(ServerState* state, int client_socket) {
             msg.payload[msg.length] = '\0';
             
             bool correct = check_answer(quiz, client->current_question, msg.payload);
-            printf("DEBUG: Answer is %s\n", correct ? "correct" : "incorrect");
+            DEBUG_PRINT("Answer is %s\n", correct ? "correct" : "incorrect");
             Player* player = find_player(state->players, client->nickname);
 
             // Invia il messaggio di risposta corretta/errata al client
@@ -311,6 +306,7 @@ void process_client_message(ServerState* state, int client_socket) {
             } else {
                 strcpy(response_msg.payload, "Risposta errata!");
             }
+            
             response_msg.length = strlen(response_msg.payload);
             if (send_message(client_socket, &response_msg) < 0) {
                 handle_disconnect(state, client_socket);
@@ -363,7 +359,7 @@ void process_client_message(ServerState* state, int client_socket) {
                 }
 
                 if (!sport_completed || !geo_completed) {
-                    // Send quiz options only if there are still available quizzes
+                    // Invia i quiz sempre che ce ne siano ancora disponibili
                     send_quiz_options(client_socket);
                 }
             } else {
@@ -417,7 +413,7 @@ void handle_disconnect(ServerState* state, int client_socket) {
         remove_player(state->players, client_data[client_socket].nickname);
     }
 
-    printf("Client disconnesso\n");
+    printf("\nClient disconnesso con socket %d\n", client_socket);
 
     // Rimuovi il socket dal set
     FD_CLR(client_socket, &state->active_fds);
@@ -482,22 +478,25 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    printf("Server avviato sulla porta %s\n", argv[1]);
+    DEBUG_PRINT("Server avviato sulla porta %s", argv[1]);
     
     server_state = state;  // Salva il riferimento globale
     display_server_status(state);
 
+    // Imposta il gestore per SIGINT e SIGTERM
     signal(SIGINT, handle_shutdown);
     signal(SIGTERM, handle_shutdown);
 
     while (1) {
         state->read_fds = state->active_fds;
         
+        // Attendi per nuovi messaggi
         if (select(state->max_fd + 1, &state->read_fds, NULL, NULL, NULL) < 0) {
             perror("Errore nella select");
             break;
         }
 
+        // Controlla tutti i socket per vedere se ci sono messaggi
         for (int i = 0; i <= state->max_fd; i++) {
             if (FD_ISSET(i, &state->read_fds)) {
                 if (i == state->server_socket) {
@@ -509,6 +508,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    // Pulisci le risorse del server
     cleanup_server(state);
     return 0;
 }

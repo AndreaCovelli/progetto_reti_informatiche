@@ -36,6 +36,7 @@ typedef struct {
 /**
  * Carica un quiz da file
  * @param filename Nome del file
+ * @return Quiz* puntatore al quiz caricato
  */
 Quiz* load_quiz(const char* filename);
 
@@ -65,7 +66,7 @@ bool check_answer(Quiz* quiz, int question_num, const char* answer);
 /**
  * Restituisce il numero di domande del quiz
  * @param quiz Quiz* quiz
- * @return numero di domande
+ * @return int, numero di domande
  */
 int get_question_count(Quiz* quiz);
 

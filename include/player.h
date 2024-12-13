@@ -41,7 +41,7 @@ PlayerArray* create_player_array(int capacity);
 /**
  * Libera la memoria allocata per l'array
  * @param array PlayerArray* da liberare
- * @return void
+
  */
 void free_player_array(PlayerArray* array);
 
@@ -74,7 +74,7 @@ Player* find_player(PlayerArray* array, const char* nickname);
  * @param array PlayerArray* array di giocatori
  * @param sport_quiz true se si vuole ordinare i giocatori 
  * per il punteggio del quiz sullo sport, false per il quiz sulla geografia
- * @return void
+, l'array viene ordinato per riferimento
  */
 void sort_players_by_score(PlayerArray* array, bool sport_quiz);
 
@@ -103,7 +103,7 @@ bool has_completed_quiz(PlayerArray* player, const char* nick_name, bool sport_q
  * @param nickname const char* nickname del giocatore
  * @param sport_quiz true se si vuole segnare il quiz sullo sport come completato,
  * false per la geografia
- * @return void
+
  */
 void mark_quiz_as_completed(PlayerArray* array, const char* nickname, bool sport_quiz);
 

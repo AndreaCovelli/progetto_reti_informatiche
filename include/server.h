@@ -1,10 +1,11 @@
 #ifndef SERVER_H
 #define SERVER_H
 
+#include <sys/select.h>
 #include "common.h"
 #include "player.h"
 #include "quiz.h"
-#include <sys/select.h>
+#include "debug.h"
 
 /**
  * Struttura per mantenere lo stato del server
@@ -51,7 +52,7 @@ ServerState* init_server(const char* ip, int port);
 /**
  * Pulisce le risorse allocate dal server
  * @param state ServerState* struttura del server
- * @return void
+
  * @note Chiude tutti i socket aperti
  */
 void cleanup_server(ServerState* state);
@@ -59,15 +60,13 @@ void cleanup_server(ServerState* state);
 /**
  * Gestisce una nuova connessione in arrivo
  * @param state ServerState* struttura del server
- * @return void
  */
 void handle_new_connection(ServerState* state);
 
 /**
  * Gestisce un messaggio ricevuto da un client
  * @param state ServerState* struttura del server
- * @param client_socket int socket del client
- * @return void
+ * @param client_socket socket del client
  */
 void process_client_message(ServerState* state, int client_socket);
 
@@ -75,7 +74,6 @@ void process_client_message(ServerState* state, int client_socket);
  * Invia un messaggio a tutti i client connessi
  * @param state ServerState* struttura del server
  * @param msg Message* messaggio da inviare
- * @return void
  * @note Usata per aggiornamenti di stato del server
  */
 void broadcast_message(ServerState* state, Message* msg);
@@ -83,18 +81,40 @@ void broadcast_message(ServerState* state, Message* msg);
 /**
  * Gestisce la disconnessione di un client
  * @param state ServerState* struttura del server
- * @param client_socket int socket del client
- * @return void
+ * @param client_socket socket del client
  * @note Rimuove il client dai descrittori attivi
  */
 void handle_disconnect(ServerState* state, int client_socket);
 
 /**
+ * Gestisce la chiusura del server
+ * @note Invia un messaggio di disconnessione a tutti i client
+ */
+void handle_shutdown();
+
+/**
+ * Mostra lo stato del server
+ * @param state ServerState* struttura del server
+ */
+void display_server_status(ServerState* state);
+
+/**
+ * Invia un prompt per il nickname al client
+ * @param client_socket socket del client
+ */
+void send_nickname_prompt(int client_socket);
+
+/**
+ * Invia il messaggio con i quiz disponibili al client
+ * @param client_socket socket del client
+ */
+void send_quiz_options(int client_socket);
+
+/**
  * Invia una domanda ad un client
- * @param client_socket int socket del client
+ * @param client_socket socket del client
  * @param quiz Quiz* quiz corrente
- * @param question_num int numero della domanda
- * @return void
+ * @param question_num numero della domanda
  */
 void send_question_to_client(int client_socket, Quiz* quiz, int question_num);
 

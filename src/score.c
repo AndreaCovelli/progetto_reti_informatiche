@@ -8,7 +8,7 @@ char* format_scores(ServerState* state) {
 
     // Sezione Partecipanti
     offset += snprintf(score_buffer, MAX_MSG_LEN, 
-                      "Partecipanti:\n");
+                      "\nPartecipanti:\n");
     for (int i = 0; i < state->players->count; i++) {
         offset += snprintf(score_buffer + offset, MAX_MSG_LEN - offset, 
                          "- %s\n", state->players->players[i].nickname);

@@ -72,8 +72,10 @@ ssize_t send_message(int sock, Message* msg) {
         contiene metadati importanti che influenzano
         come il payload deve essere processato
      */
-    //printf("DEBUG: Sent type %s, length %d, payload %s\n", 
-    //       message_type_to_string(msg->type), msg->length, msg->payload);
+    
+    DEBUG_PRINT("Sent message of type %s, length %d, payload (first ten chars): %.20s\n", 
+           message_type_to_string(msg->type), msg->length, msg->payload);
+
     return sent + header_size;
 }
 
@@ -103,8 +105,9 @@ ssize_t receive_message(int sock, Message* msg) {
         // Ensure null termination
         msg->payload[msg->length] = '\0';
     }
-    printf("Received message of type %s from device %d\n", 
-           message_type_to_string(msg->type), sock);
+
+    DEBUG_PRINT("Received message of type %s, length %d, payload (first ten chars): %.20s\n", 
+           message_type_to_string(msg->type), msg->length, msg->payload);
     
     return received + header_size;
 }
@@ -114,10 +117,13 @@ const char* message_type_to_string(MessageType type) {
         case MSG_LOGIN: return "MSG_LOGIN";
         case MSG_LOGIN_SUCCESS: return "MSG_LOGIN_SUCCESS";
         case MSG_LOGIN_ERROR: return "MSG_LOGIN_ERROR";
+        case MSG_REQUEST_NICKNAME: return "MSG_REQUEST_NICKNAME";
+        case MSG_NICKNAME_PROMPT: return "MSG_NICKNAME_PROMPT";
         case MSG_REQUEST_QUESTION: return "MSG_REQUEST_QUESTION";
         case MSG_QUESTION: return "MSG_QUESTION";
         case MSG_ANSWER: return "MSG_ANSWER";
         case MSG_ANSWER_RESULT: return "MSG_ANSWER_RESULT";
+        case MSG_REQUEST_SCORE: return "MSG_REQUEST_SCORE";
         case MSG_SCORE: return "MSG_SCORE";
         case MSG_QUIZ_COMPLETED: return "MSG_QUIZ_COMPLETED";
         case MSG_QUIZ_AVAILABLE: return "MSG_QUIZ_AVAILABLE";
@@ -125,9 +131,6 @@ const char* message_type_to_string(MessageType type) {
         case MSG_END_QUIZ: return "MSG_END_QUIZ";
         case MSG_DISCONNECT: return "MSG_DISCONNECT";
         case MSG_ERROR: return "MSG_ERROR";
-        case MSG_REQUEST_NICKNAME: return "MSG_REQUEST_NICKNAME";
-        case MSG_NICKNAME_PROMPT: return "MSG_NICKNAME_PROMPT";
-        case MSG_REQUEST_SCORE: return "MSG_REQUEST_SCORE";
-        default: return "UNKNOWN";
+        default: return "UNKNOWN"; // Messaggio sconosciuto
     }
 }
