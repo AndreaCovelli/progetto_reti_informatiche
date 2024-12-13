@@ -31,6 +31,11 @@ all: $(OBJ_DIR) $(CLIENT) $(SERVER)
 debug: CFLAGS += $(DEBUGFLAGS)
 debug: $(OBJ_DIR) $(CLIENT_DEBUG) $(SERVER_DEBUG)
 
+# Documentation
+docs:
+	doxygen Doxyfile
+	@echo "Documentation generated in docs/html"
+
 # Create obj directory if it doesn't exist
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
@@ -57,9 +62,9 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 
 # Clean target
 clean:
-	rm -rf $(OBJ_DIR) $(CLIENT) $(SERVER) $(CLIENT_DEBUG) $(SERVER_DEBUG)
+	rm -rf $(OBJ_DIR) $(CLIENT) $(SERVER) $(CLIENT_DEBUG) $(SERVER_DEBUG) docs/
 
 # Dependencies
 -include $(OBJ_DIR)/*.d
 
-.PHONY: all clean debug
+.PHONY: all clean debug docs

@@ -16,6 +16,11 @@ domande_casuali_quiz.md
 tests/
 unity/
 
+# Docs
+docs/
+Doxyfile
+mainpage.dox
+
 # Log files
 *.log
 logs/

@@ -308,7 +308,8 @@ bool play_game_session(ClientState* state) {
                 return false;
             case MSG_QUIZ_COMPLETED:
                 printf("\n%s\n", msg.payload);
-                return play_game_session(state);
+                break;
+                //return play_game_session(state);
             case MSG_TRIVIA_COMPLETED:
                 /* Il client ha completato tutti i quiz
                    Resetta lo stato e torna al menu principale

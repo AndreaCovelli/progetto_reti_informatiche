@@ -38,13 +38,13 @@
  * @param MSG_ANSWER Indica: "il payload contiene una risposta"
  * @param MSG_ANSWER_RESULT Risultato della risposta inviato al client
  * @param MSG_REQUEST_SCORE Richiesta di invio dei punteggi
- * @param MSG_SCORE Indica: "il payload contiene i punteggi
- * @param MSG_QUIZ_COMPLETED Indica: "il payload contiene un messaggio di completamento" 
- * @param MSG_QUIZ_AVAILABLE Indica: "il payload contiene la lista dei quiz disponibili"
- * @param MSG_TRIVIA_COMPLETED Indica: "il payload contiene il messaggio di fine gioco"
- * @param MSG_END_QUIZ Indica: "il payload contiene il messaggio di fine quiz"
- * @param MSG_DISCONNECT Indica: "il payload contiene il messaggio di disconnessione"
- * @param MSG_ERROR Indica: "il payload contiene un messaggio di errore"
+ * @param MSG_SCORE               Indica: "il payload contiene i punteggi"
+ * @param MSG_QUIZ_COMPLETED      Indica: "il payload contiene un messaggio di completamento" 
+ * @param MSG_QUIZ_AVAILABLE      Indica: "il payload contiene la lista dei quiz disponibili"
+ * @param MSG_TRIVIA_COMPLETED    Indica: "il payload contiene il messaggio di fine gioco"
+ * @param MSG_END_QUIZ            Indica: "il payload contiene il messaggio di fine quiz"
+ * @param MSG_DISCONNECT          Indica: "il payload contiene il messaggio di disconnessione"
+ * @param MSG_ERROR               Indica: "il payload contiene un messaggio di errore"
  */
 typedef enum {
     MSG_LOGIN = 1,
