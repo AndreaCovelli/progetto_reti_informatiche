@@ -56,13 +56,13 @@ bool add_player(PlayerArray* array, const char* nickname) {
     return true;
 }
 
-void reset_player_scores(PlayerArray* array, const char* nickname) {
+void reset_player_connection(PlayerArray* array, const char* nickname) {
     if (!array || !nickname) return;
 
     Player* player = find_player(array, nickname);
     if (player) {
-        player->sport_score = 0;
-        player->geography_score = 0;
+        //player->sport_score = 0;
+        //player->geography_score = 0;
         player->is_connected = false;
     }
 }

@@ -60,7 +60,7 @@ bool add_player(PlayerArray* array, const char* nickname);
  * @param array PlayerArray* array di giocatori
  * @param nickname const char* nickname del giocatore
  */
-void reset_player_scores(PlayerArray* array, const char* nickname);
+void reset_player_connection(PlayerArray* array, const char* nickname);
 
 /**
  * Rimuove un giocatore dall'array

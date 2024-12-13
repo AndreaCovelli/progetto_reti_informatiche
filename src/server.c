@@ -369,7 +369,7 @@ void process_client_message(ServerState* state, int client_socket) {
                             scores);
                     complete_msg.type = MSG_TRIVIA_COMPLETED;
                     // Rimuovi il giocatore
-                    reset_player_scores(state->players, client->nickname);
+                    reset_player_connection(state->players, client->nickname);
                     // Resetta i dati del client
                     memset(&client_data[client_socket], 0, sizeof(ClientData));
                 } else {
@@ -409,7 +409,7 @@ void process_client_message(ServerState* state, int client_socket) {
 
             // Rimuovi il giocatore dalla lista
             if (strlen(client_data[client_socket].nickname) > 0) {
-                reset_player_scores(state->players, client_data[client_socket].nickname);
+                reset_player_connection(state->players, client_data[client_socket].nickname);
                 // Resetta i dati del client
                 memset(&client_data[client_socket], 0, sizeof(ClientData));
             }
@@ -435,7 +435,7 @@ void handle_disconnect(ServerState* state, int client_socket) {
     // Rimuovi il giocatore dalla lista
     if (strlen(client_data[client_socket].nickname) > 0) {
         // Resetta solo i punteggi e lo stato di connessione
-        reset_player_scores(state->players, client_data[client_socket].nickname);
+        reset_player_connection(state->players, client_data[client_socket].nickname);
     }
 
     printf("\nClient disconnesso con socket %d\n", client_socket);
