@@ -9,9 +9,15 @@ char* format_scores(ServerState* state) {
     // Sezione Partecipanti
     offset += snprintf(score_buffer, MAX_MSG_LEN, 
                       "\nPartecipanti:\n");
-    for (int i = 0; i < state->players->count; i++) {
+    
+    if(state->players->count == 0) {
         offset += snprintf(score_buffer + offset, MAX_MSG_LEN - offset, 
-                         "- %s\n", state->players->players[i].nickname);
+                         "Nessun giocatore presente\n");
+    } else {
+        for (int i = 0; i < state->players->count; i++) {
+            offset += snprintf(score_buffer + offset, MAX_MSG_LEN - offset, 
+                            "- %s\n", state->players->players[i].nickname);
+        }
     }
 
     // Sezione Sport

@@ -12,6 +12,10 @@ server_debug
 client_debug
 domande_casuali_quiz.md
 
+# Test files
+tests/
+unity/
+
 # Log files
 *.log
 logs/

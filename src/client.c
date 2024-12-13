@@ -50,6 +50,7 @@ void disconnect_from_server(ClientState* state) {
         Message msg;
         msg.type = MSG_DISCONNECT;
         msg.length = 0;
+        strncpy(msg.payload, "", MAX_MSG_LEN);
         
         // Prova a inviare il messaggio di disconnessione se il socket è ancora attivo
         send_message(state->socket, &msg);
@@ -132,7 +133,7 @@ bool validate_and_send_nickname(ClientState* state) {
     while (!nickname_valid) {
         // Attendi il prompt del server per il nickname
         if (receive_message(state->socket, &msg) < 0) {
-            printf("Server disconnesso\n");
+            printf("Server disconnesso durante la scelta del nickname\n");
             disconnect_from_server(state);
             return false;
         }
@@ -164,7 +165,7 @@ bool validate_and_send_nickname(ClientState* state) {
 
                 case MSG_LOGIN_ERROR:
                     printf("%s\n", msg.payload);
-                    break;
+                    return false;
 
                 default:
                     printf("Unexpected message from server\n");
@@ -311,7 +312,7 @@ bool play_game_session(ClientState* state) {
             case MSG_TRIVIA_COMPLETED:
                 /* Il client ha completato tutti i quiz
                    Resetta lo stato e torna al menu principale
-                   Stampa i punteggi finali */
+                   Stampa i punteggi */
                 printf("\n%s\n", msg.payload);
                 state->current_quiz = 0;
                 state->current_question = 0;
@@ -347,10 +348,8 @@ int main(int argc, char *argv[]) {
         case 1:
             // Se il socket è chiuso, riconnettiti
             if (state->socket == -1) {
-                if (!connect_to_server(state, atoi(argv[1]))) {
-                    printf("Errore di connessione al server\n");
+                if (!connect_to_server(state, atoi(argv[1])))
                     break;
-                }
             }
             if (!validate_and_send_nickname(state)) {
                 // Se il login fallisce, disconnettiti dal server e torna al menu

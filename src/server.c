@@ -131,17 +131,8 @@ void display_server_status(ServerState* state) {
         printf("2. %s\n", geography_quiz->topic);
     }
     
-    // Mostra il numero e i nomi dei client connessi
-    printf("\nClient connessi (%d):\n", state->players->count);
-    
-    // Se ci sono client connessi, mostra i loro nickname
-    if (state->players->count > 0) {
-        for (int i = 0; i < state->players->count; i++) {
-            printf("- %s\n", state->players->players[i].nickname);
-        }
-    } else {
-        printf("Nessun client connesso\n");
-    }
+    char* scores = format_scores(state);
+    printf("%s", scores);
     printf("++++++++++++++++++++++++++++\n\n");
 }
 
@@ -173,23 +164,23 @@ void send_quiz_options(int client_socket) {
              "Quiz disponibili\n"
              "++++++++++++++++++++++++++++++\n");
              
-    // Add sport quiz option only if not completed
+    // Aggiungi il quiz sport solo se non è stato completato
     if (!sport_completed) {
         offset += snprintf(available + offset, MAX_MSG_LEN - offset, "1 - Sport\n");
     }
     
-    // Add geography quiz option only if not completed 
+    // Aggiungi il quiz sulla geografia solo se non è stato completato
     if (!geo_completed) {
         offset += snprintf(available + offset, MAX_MSG_LEN - offset, "2 - Geografia\n");
     }
     
-    // If all quizzes are completed, show a different message
+    // Se entrambi i quiz sono completati, invia un messaggio di completamento
     if (sport_completed && geo_completed) {
         snprintf(available, MAX_MSG_LEN,
                 "Non ci sono più quiz disponibili.\n"
                 "Hai completato tutti i quiz!\n");
     } else {
-        // Add the closing border only if there are available quizzes
+        // Aggiungi un messaggio di separazione solo se ci sono quiz disponibili
         snprintf(available + offset, MAX_MSG_LEN - offset, 
                 "++++++++++++++++++++++++++++++\n");
     }
@@ -233,22 +224,55 @@ void process_client_message(ServerState* state, int client_socket) {
         case MSG_REQUEST_NICKNAME:
             // Process login...
             msg.payload[msg.length] = '\0';
-            if (add_player(state->players, msg.payload)) {
-                strncpy(client->nickname, msg.payload, MAX_NICK_LENGTH - 1);
-                msg.type = MSG_LOGIN_SUCCESS;
-                strcpy(msg.payload, "Login avvenuto con successo!");
-                msg.length = strlen(msg.payload);
-                send_message(client_socket, &msg);
-                
-                // Dopo un login riuscito, invia i quiz disponibili
-                send_quiz_options(client_socket);
-            } else {
-                // Errore, nickname già preso
-                msg.type = MSG_LOGIN_ERROR;
-                strcpy(msg.payload, "Nickname già preso, scegline un altro");
-                msg.length = strlen(msg.payload);
-                send_message(client_socket, &msg);
+            Player* existing_player = find_player(state->players, msg.payload);
+
+            if (existing_player) {
+                if (existing_player->is_connected) {
+                    // Nickname già in uso da un client connesso
+                    msg.type = MSG_LOGIN_ERROR;
+                    strcpy(msg.payload, "Nickname già in uso da un altro giocatore");
+                    msg.length = strlen(msg.payload);
+                    send_message(client_socket, &msg);
+                } else {
+                    // Nickname esistente ma non connesso
+                    existing_player->is_connected = true;
+                    strncpy(client->nickname, msg.payload, MAX_NICK_LENGTH - 1);
+                    msg.type = MSG_LOGIN_SUCCESS;
+
+                    if (existing_player->completed_sport && existing_player->completed_geography) {
+                        strcpy(msg.payload, "Hai già completato tutti i quiz disponibili! Torna presto per nuovi quiz.");
+                        msg.length = strlen(msg.payload);
+                        send_message(client_socket, &msg);
+                        
+                        // Disconnetti il client
+                        handle_disconnect(state, client_socket);
+                    } else {
+                        strcpy(msg.payload, "Sei stato riconnesso con successo!");
+                        msg.length = strlen(msg.payload);
+                        send_message(client_socket, &msg);
+
+                        display_server_status(state);
+                        send_quiz_options(client_socket);
+                    }
+                }
+            } else { 
+                // Nickname non esistente, aggiungi il giocatore
+                if (add_player(state->players, msg.payload)) {
+                    Player* new_player = find_player(state->players, msg.payload);
+                    new_player->is_connected = true;
+
+                    strncpy(client->nickname, msg.payload, MAX_NICK_LENGTH - 1);
+                    msg.type = MSG_LOGIN_SUCCESS;
+                    strcpy(msg.payload, "Login avvenuto con successo!");
+                    msg.length = strlen(msg.payload);
+                    send_message(client_socket, &msg);
+                    
+                    display_server_status(state);
+                    // Dopo un login riuscito, invia i quiz disponibili
+                    send_quiz_options(client_socket);
+                }
             }
+            
             break;
 
         // Il client chiede una domanda di un certo quiz
@@ -339,13 +363,13 @@ void process_client_message(ServerState* state, int client_socket) {
                 if (sport_completed && geo_completed) {
                     // Il client ha completato entrambi i quiz
                     char* scores = format_scores(state);
-                    printf("%s", scores);
+
                     snprintf(complete_msg.payload, MAX_MSG_LEN, 
-                            "Hai completato tutti i quiz disponibili!\n\nPunteggi finali:\n%s", 
+                            "Hai completato tutti i quiz disponibili!\n\n%s", 
                             scores);
                     complete_msg.type = MSG_TRIVIA_COMPLETED;
                     // Rimuovi il giocatore
-                    remove_player(state->players, client->nickname);
+                    reset_player_scores(state->players, client->nickname);
                     // Resetta i dati del client
                     memset(&client_data[client_socket], 0, sizeof(ClientData));
                 } else {
@@ -371,7 +395,7 @@ void process_client_message(ServerState* state, int client_socket) {
         case MSG_REQUEST_SCORE:
             // Gestione richiesta punteggi
             char* scores = format_scores(state);
-            printf("%s", scores);
+
             msg.type = MSG_SCORE;
             msg.length = strlen(scores);
             strncpy(msg.payload, scores, MAX_MSG_LEN - 1);
@@ -385,8 +409,8 @@ void process_client_message(ServerState* state, int client_socket) {
 
             // Rimuovi il giocatore dalla lista
             if (strlen(client_data[client_socket].nickname) > 0) {
-                remove_player(state->players, client_data[client_socket].nickname);
-                // Resetta completamente i dati del client
+                reset_player_scores(state->players, client_data[client_socket].nickname);
+                // Resetta i dati del client
                 memset(&client_data[client_socket], 0, sizeof(ClientData));
             }
 
@@ -410,7 +434,8 @@ void process_client_message(ServerState* state, int client_socket) {
 void handle_disconnect(ServerState* state, int client_socket) {
     // Rimuovi il giocatore dalla lista
     if (strlen(client_data[client_socket].nickname) > 0) {
-        remove_player(state->players, client_data[client_socket].nickname);
+        // Resetta solo i punteggi e lo stato di connessione
+        reset_player_scores(state->players, client_data[client_socket].nickname);
     }
 
     printf("\nClient disconnesso con socket %d\n", client_socket);

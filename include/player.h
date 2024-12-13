@@ -10,6 +10,7 @@
  * @param geography_score Punteggio del giocatore nel quiz sulla geografia
  * @param completed_sport true se il giocatore ha completato il quiz sullo sport
  * @param completed_geography true se il giocatore ha completato il quiz sulla geografia
+ * @param is_connected true se il giocatore è connesso, false altrimenti
  */
 typedef struct {
     char nickname[MAX_NICK_LENGTH]; // Nickname del giocatore
@@ -17,6 +18,7 @@ typedef struct {
     int geography_score;
     bool completed_sport;
     bool completed_geography;
+    bool is_connected;
 } Player;
 
 /**
@@ -52,6 +54,13 @@ void free_player_array(PlayerArray* array);
  * @return true se il giocatore è stato aggiunto, false altrimenti
  */
 bool add_player(PlayerArray* array, const char* nickname);
+
+/**
+ * Resetta i punteggi di un giocatore e lo segna come non connesso
+ * @param array PlayerArray* array di giocatori
+ * @param nickname const char* nickname del giocatore
+ */
+void reset_player_scores(PlayerArray* array, const char* nickname);
 
 /**
  * Rimuove un giocatore dall'array
