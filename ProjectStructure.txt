@@ -1,21 +1,33 @@
 .
+├── LICENSE
 ├── Makefile
 ├── ProjectStructure.txt
+├── README.md
 ├── TriviaQuizClient.png
 ├── TriviaQuizClient.txt
 ├── TriviaQuizServer.png
 ├── TriviaQuizServer.txt
+├── client
 ├── include
 │   ├── client.h
 │   ├── common.h
 │   ├── constants.h
+│   ├── debug.h
 │   ├── player.h
 │   ├── quiz.h
 │   ├── score.h
 │   └── server.h
+├── obj
+│   ├── client.o
+│   ├── common.o
+│   ├── player.o
+│   ├── quiz.o
+│   ├── score.o
+│   └── server.o
 ├── res
 │   ├── geography_quiz.txt
 │   └── sport_quiz.txt
+├── server
 └── src
     ├── client.c
     ├── common.c
@@ -24,4 +36,4 @@
     ├── score.c
     └── server.c
 
-4 directories, 21 files
+5 directories, 32 files
