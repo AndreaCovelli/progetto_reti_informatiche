@@ -1,5 +1,7 @@
 # Trivia Quiz Multiplayer
 
+![Immmagine](project_dependencies.png)
+
 ### Descrizione
 Questo progetto implementa un gioco di quiz multiplayer client-server in C. Il sistema permette a più giocatori di partecipare contemporaneamente a quiz su diversi temi (Sport e Geografia), mantenendo punteggi e classifiche separate per ogni tema.
 
@@ -16,7 +18,7 @@ Questo progetto implementa un gioco di quiz multiplayer client-server in C. Il s
 
 ## Requisiti di Sistema
 
-- Compilatore: GCC v13
+- Compilatore: GCC v.13
 - Make
 
 ## Installazione

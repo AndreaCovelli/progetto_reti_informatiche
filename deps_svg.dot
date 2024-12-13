@@ -1,0 +1,95 @@
+// dot -Tsvg deps.dot -o project_dependencies.svg
+digraph ProjectDependencies {
+    // Title settings
+    label="Project Dependencies";
+    labelloc="t";
+    fontname="Arial Bold";
+    fontsize=24;
+    
+    // Graph settings for SVG
+    graph [
+        size="11,8!",
+        pad="0.5,0.5"
+    ];
+    
+    // General layout
+    rankdir=LR;
+    splines=ortho;
+    nodesep=0.8;    // Increased node separation
+    ranksep=1.2;    // Increased rank separation
+    
+    // Default node style with larger sizes
+    node [
+        shape=box,
+        style="filled,rounded",
+        fontname="Arial",
+        fontsize=14,        // Increased font size
+        width=2.0,         // Explicit width
+        height=0.8,        // Explicit height
+        margin="0.3,0.2"   // Margin inside nodes
+    ];
+    
+    // Edge style
+    edge [
+        color="#666666",
+        penwidth=1.5,      // Thicker lines
+        arrowsize=1.0      // Larger arrows
+    ];
+
+    // Header files subgraph
+    subgraph cluster_headers {
+        label="Header Files";
+        style="filled,rounded";
+        color="#E8E8E8";
+        fontname="Arial Bold";
+        fontsize=16;
+        
+        constants_h[label="constants.h", fillcolor="#FFE6CC"];
+        common_h[label="common.h", fillcolor="#FFE6CC"];
+        player_h[label="player.h", fillcolor="#DAE8FC"];
+        quiz_h[label="quiz.h", fillcolor="#DAE8FC"];
+        debug_h[label="debug.h", fillcolor="#DAE8FC"];
+        client_h[label="client.h", fillcolor="#D5E8D4"];
+        server_h[label="server.h", fillcolor="#D5E8D4"];
+        score_h[label="score.h", fillcolor="#D5E8D4"];
+        
+        { rank=same; constants_h; }
+        { rank=same; common_h; player_h; }
+        { rank=same; client_h; debug_h; quiz_h; }
+        { rank=same; server_h; score_h; }
+    }
+    
+    // Source files subgraph
+    subgraph cluster_sources {
+        label="Source Files";
+        style="filled,rounded";
+        color="#E8E8E8";
+        fontname="Arial Bold";
+        fontsize=16;
+        
+        client_c[label="client.c", fillcolor="#F8CECC"];
+        common_c[label="common.c", fillcolor="#F8CECC"];
+        player_c[label="player.c", fillcolor="#F8CECC"];
+        quiz_c[label="quiz.c", fillcolor="#F8CECC"];
+        score_c[label="score.c", fillcolor="#F8CECC"];
+        server_c[label="server.c", fillcolor="#F8CECC"];
+        
+        { rank=same; client_c; common_c; }
+        { rank=same; player_c; quiz_c; }
+        { rank=same; score_c; server_c; }
+    }
+    
+    // Dependencies
+    player_h -> constants_h;
+    client_h -> common_h;
+    quiz_h -> {player_h common_h};
+    server_h -> {common_h player_h quiz_h debug_h};
+    score_h -> server_h;
+    
+    client_c -> {client_h debug_h common_h};
+    common_c -> {common_h debug_h};
+    player_c -> player_h;
+    quiz_c -> {quiz_h player_h common_h debug_h};
+    score_c -> {score_h server_h};
+    server_c -> {server_h quiz_h score_h};
+}

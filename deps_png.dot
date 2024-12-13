@@ -1,0 +1,98 @@
+// dot -Tpng deps.dot -o project_dependencies.png
+digraph ProjectDependencies {
+    // Title and sizing settings
+    label="Project Dependencies";
+    labelloc="t";  // Place the label at the top
+    fontname="Arial Bold";
+    fontsize=20;
+
+    // Graph settings
+    graph [
+        dpi=300, // add in png export
+        ratio=fill,
+        size="14,10!"  // Increased size
+    ];
+
+    rankdir=LR;
+    splines=ortho;
+    nodesep=0.5;
+    ranksep=1.0;
+    
+    // Default node style
+    node [
+        shape=box,
+        style="filled,rounded",
+        fontname="Arial",
+        fontsize=11
+    ];
+    
+    // Edge style
+    edge [
+        color="#666666",
+        penwidth=1.2,
+        arrowsize=0.8
+    ];
+
+    // Header files subgraph
+    subgraph cluster_headers {
+        label="Header Files";
+        style="filled,rounded";
+        color="#E8E8E8";
+        fontname="Arial Bold";
+        fontsize=12;
+        
+        // Core headers
+        constants_h[label="constants.h", fillcolor="#FFE6CC"];
+        common_h[label="common.h", fillcolor="#FFE6CC"];
+        
+        // Feature headers
+        player_h[label="player.h", fillcolor="#DAE8FC"];
+        quiz_h[label="quiz.h", fillcolor="#DAE8FC"];
+        debug_h[label="debug.h", fillcolor="#DAE8FC"];
+        score_h[label="score.h", fillcolor="#DAE8FC"];
+        
+        // Main component headers
+        client_h[label="client.h", fillcolor="#D5E8D4"];
+        server_h[label="server.h", fillcolor="#D5E8D4"];
+        
+        { rank=same; constants_h; }
+        { rank=same; common_h; player_h; }
+        { rank=same; client_h; debug_h; quiz_h; }
+        { rank=same; server_h; score_h; }
+    }
+    
+    // Source files subgraph
+    subgraph cluster_sources {
+        label="Source Files";
+        style="filled,rounded";
+        color="#E8E8E8";
+        fontname="Arial Bold";
+        fontsize=12;
+        
+        // Implementation files
+        client_c[label="client.c", fillcolor="#F8CECC"];
+        common_c[label="common.c", fillcolor="#F8CECC"];
+        player_c[label="player.c", fillcolor="#F8CECC"];
+        quiz_c[label="quiz.c", fillcolor="#F8CECC"];
+        score_c[label="score.c", fillcolor="#F8CECC"];
+        server_c[label="server.c", fillcolor="#F8CECC"];
+        
+        { rank=same; client_c; common_c; }
+        { rank=same; player_c; quiz_c; }
+        { rank=same; score_c; server_c; }
+    }
+    
+    // Dependencies
+    player_h -> constants_h;
+    client_h -> common_h;
+    quiz_h -> {player_h common_h};
+    server_h -> {common_h player_h quiz_h debug_h};
+    score_h -> server_h;
+    
+    client_c -> {client_h debug_h common_h};
+    common_c -> {common_h debug_h};
+    player_c -> player_h;
+    quiz_c -> {quiz_h player_h common_h debug_h};
+    score_c -> {score_h server_h};
+    server_c -> {server_h quiz_h score_h};
+}
