@@ -41,6 +41,11 @@ bool add_player(PlayerArray* array, const char* nickname) {
     if (!array || !nickname) return false;
     DEBUG_PRINT("Aggiungendo il giocatore: %s", nickname);
 
+    // Verifica che non ci siano troppi giocatori
+    if (array->count >= MAX_PLAYERS) {
+        return false;
+    }
+
     // Verifica che il giocatore non sia già presente
     if (find_player(array, nickname) != NULL) return false;
 
@@ -132,6 +137,7 @@ static int compare_players_by_score(const void* a, const void* b, bool sport_qui
     
     return score_b - score_a;
 }
+
 /**
  * Confronta due giocatori in base al punteggio Sport
  * @param a const void* puntatore al primo giocatore

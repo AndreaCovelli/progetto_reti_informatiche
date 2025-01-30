@@ -29,14 +29,12 @@ typedef struct {
  * @param current_quiz Numero del quiz attualmente selezionato (1 per sport, 2 per geografia)
  * @param current_question Numero della domanda corrente
  * @param is_playing Indica se il client è attualmente in partita
- * @param assigned_questions Array di domande assegnate al client
  */
 typedef struct {
     char nickname[MAX_NICK_LENGTH];
     int current_quiz;
     int current_question;
     bool is_playing;
-    Question assigned_questions[QUESTIONS_PER_GAME];
 } ClientData;
 
 // Funzioni server

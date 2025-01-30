@@ -135,7 +135,7 @@ void handle_disconnect(ServerState* state, int client_socket) {
         reset_player_connection(state->players, client_data[client_socket].nickname);
         
         // Registro la disconnessione e il reset per il debug
-        DEBUG_PRINT("Player %s disconnected - scores reset\n", 
+        DEBUG_PRINT("Player %s disconnesso - reset del punteggio per i quiz non completati\n", 
                    client_data[client_socket].nickname);
     }
 
@@ -250,7 +250,14 @@ bool handle_existing_player(ServerState* state, int client_socket,
 }
 
 bool handle_new_player(ServerState* state, int client_socket, const char* nickname) {
+    
+    // Controlla se il server ha raggiunto la massima capacità di giocatori
     if (!add_player(state->players, nickname)) {
+        Message msg;
+        msg.type = MSG_LOGIN_ERROR;
+        strcpy(msg.payload, "Il server ha raggiunto la massima capacità di giocatori, riprova più tardi.");
+        msg.length = strlen(msg.payload);
+        send_message(client_socket, &msg);
         return false;
     }
     
@@ -485,7 +492,7 @@ void process_client_message(ServerState* state, int client_socket) {
                     // Invia conferma al client
                     Message response;
                     response.type = MSG_QUIZ_COMPLETED;
-                    strncpy(response.payload, "Quiz terminato. Torna al menu principale.", MAX_MSG_LEN);
+                    strncpy(response.payload, "Endquiz ricevuto. Ridirezione al menu principale.", MAX_MSG_LEN);
                     response.length = strlen(response.payload);
                     send_message(client_socket, &response);
                 }

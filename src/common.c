@@ -61,14 +61,26 @@ int setup_connection(const char* ip, int port) {
 ssize_t send_message(int sock, Message* msg) {
     if (!msg) return ERR_SEND;
     
-    // Prima invia l'header del messaggio
-    ssize_t header_size = sizeof(msg->type) + sizeof(msg->length);
-    ssize_t sent = send(sock, msg, header_size, MSG_NOSIGNAL);
+    // Creiamo una struttura temporanea per la conversione
+
+    // La conversione host-to-network non serve per MessageType
+    // perché è un discriminatore confrontato come intero
+    // non un valore usato in calcoli numerici come length
+    struct {
+        MessageType type;
+        uint32_t length;
+    } network_header;
+    
+    network_header.type = msg->type;           // Il type rimane invariato
+    network_header.length = htonl(msg->length); // Solo length viene convertito
+    
+    ssize_t header_size = sizeof(network_header);
+    ssize_t sent = send(sock, &network_header, header_size, MSG_NOSIGNAL);
     if (sent != header_size) {
         return ERR_SEND;
     }
     
-    // Poi invia il payload se presente
+    // Poi invia il payload sse è presente
     if (msg->length > 0) {
         sent = send(sock, msg->payload, msg->length, MSG_NOSIGNAL);
         if (sent != msg->length) {
@@ -83,7 +95,7 @@ ssize_t send_message(int sock, Message* msg) {
         come il payload deve essere processato
      */
     
-    DEBUG_PRINT("Sent message of type %s, length %d, payload (first ten chars): %.20s\n", 
+    DEBUG_PRINT("Inviato messaggio di tipo %s, lunghezza %d, payload (primi 10 caratteri): %.20s\n", 
            message_type_to_string(msg->type), msg->length, msg->payload);
 
     return sent + header_size;
@@ -92,22 +104,28 @@ ssize_t send_message(int sock, Message* msg) {
 ssize_t receive_message(int sock, Message* msg) {
     if (!msg) return ERR_RECV;
     
-    // First receive the message header
-    ssize_t header_size = sizeof(msg->type) + sizeof(msg->length);
-    ssize_t received = recv(sock, msg, header_size, 0);
-    if (received <= 0) {  // Changed from != to <= to catch disconnection
-        printf("Server disconnesso\n");
+    struct {
+        MessageType type;
+        uint32_t length;
+    } network_header;
+    
+    ssize_t header_size = sizeof(network_header);
+    ssize_t received = recv(sock, &network_header, header_size, 0);
+    if (received <= 0) {
         return ERR_RECV;
     }
     
-    // Then receive the payload if there is one
+    msg->type = network_header.type;
+    msg->length = ntohl(network_header.length);  // Convertiamo solo length
+    
+    // Poi ricevo il payload sse presente
     if (msg->length > 0) {
         if (msg->length > MAX_MSG_LEN) {
             return ERR_RECV;
         }
         
         received = recv(sock, msg->payload, msg->length, 0);
-        if (received <= 0) {  // Changed from != to <= to catch disconnection
+        if (received <= 0) {  // Cambiato da != a <= per individuare la disconnessione
             printf("Server disconnesso\n");
             return ERR_RECV;
         }
@@ -116,7 +134,7 @@ ssize_t receive_message(int sock, Message* msg) {
         msg->payload[msg->length] = '\0';
     }
 
-    DEBUG_PRINT("Received message of type %s, length %d, payload (first ten chars): %.20s\n", 
+    DEBUG_PRINT("Ricevuto messaggio di tipo %s, lunghezza %d, payload (primi 10 caratteri): %.20s\n", 
            message_type_to_string(msg->type), msg->length, msg->payload);
     
     return received + header_size;

@@ -238,13 +238,14 @@ bool handle_special_commands(ClientState* state, const char* answer) {
         msg.type = MSG_END_QUIZ;
         msg.length = strlen(answer);
         strncpy(msg.payload, answer, MAX_MSG_LEN);
-        
-        if (send_message(state->socket, &msg) < 0) {
-            return false;
+        send_message(state->socket, &msg);
+
+        if (receive_message(state->socket, &msg) >= 0) {
+            printf("%s\n", msg.payload);
         }
-        
-        state->current_quiz = 0;  // Reset dello stato del quiz
-        return false;  // Segnala al chiamante di terminare il quiz
+
+        disconnect_from_server(state);
+        return true;  // Impedisce l'invio di altri messaggi
     }
     
     return false;  // Non è un comando speciale
@@ -252,14 +253,26 @@ bool handle_special_commands(ClientState* state, const char* answer) {
 
 bool answer_question(ClientState* state, const char* question) {
     char answer[MAX_ANSWER_LENGTH];
+    bool valid_input = false;
 
     printf("\nDomanda: %s\n", question);
-    printf("Risposta (o 'show score' per vedere i punteggi, 'endquiz' per uscire): ");
-    
-    if (!fgets(answer, MAX_ANSWER_LENGTH, stdin)) {
-        return false;
+
+    while (!valid_input) {
+        printf("Risposta (o 'show score' per vedere i punteggi, 'endquiz' per uscire): ");
+        
+        if (!fgets(answer, MAX_ANSWER_LENGTH, stdin)) {
+            return false;
+        }
+        
+        answer[strcspn(answer, "\n")] = 0;
+        
+        if (strlen(answer) == 0) {
+            printf("Per favore, inserisci una risposta.\n");
+            continue;
+        }
+
+        valid_input = true;  // Se arriviamo qui, l'input è valido
     }
-    answer[strcspn(answer, "\n")] = 0;
 
     if (handle_special_commands(state, answer)) {
         return true;
@@ -271,7 +284,8 @@ bool answer_question(ClientState* state, const char* question) {
 /* Funzioni di gestione della sessione di gioco */
 
 bool handle_game_message(ClientState* state, Message* msg, char* current_question) {
-    DEBUG_PRINT("Ricevuto game message di tipo: %s", message_type_to_string(msg->type));
+    DEBUG_PRINT("(handle_game_message) Ricevuto game message di tipo: %s",
+                message_type_to_string(msg->type));
 
     switch (msg->type) {
         case MSG_QUESTION:

@@ -7,7 +7,7 @@
 // Capacità iniziale dell'array di giocatori
 #define INITIAL_PLAYER_ARRAY_SIZE 10
 // Numero massimo di giocatori
-#define ABSOLUTE_MAX_PLAYERS (MAX_CLIENTS)
+#define MAX_PLAYERS 20
 
 // Limiti buffer
 #define BUFFER_SIZE 1024
