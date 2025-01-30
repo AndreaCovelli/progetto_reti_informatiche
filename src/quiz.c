@@ -1,8 +1,30 @@
+/*
+ * quiz.c
+ * Implementazione della gestione dei quiz per 'Trivia Quiz Multiplayer'
+ * 
+ * Questo file contiene l'implementazione delle funzioni per gestire i quiz,
+ * incluso il caricamento delle domande da file, la selezione casuale delle
+ * domande, la verifica delle risposte e la gestione della memoria associata
+ * alle strutture dei quiz.
+ */
+
 #include "include/quiz.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+/**
+ * Analizza una linea del file di quiz e la converte in una struttura Question.
+ * Il formato atteso è "domanda | risposta". 
+ * 
+ * @param line stringa contenente la linea da analizzare
+ * @param question puntatore alla struttura Question da popolare
+ * @return true se il parsing è avvenuto con successo, false altrimenti
+ * 
+ * @note La funzione si aspetta che ci sia uno spazio prima e dopo il 
+ *       carattere '|' nel formato "domanda | risposta"
+ * @note La funzione modifica la stringa di input usando strtok()
+ */
 static bool parse_question_line(char* line, Question* question) {
     char* question_part = strtok(line, "|");
     char* answer_part = strtok(NULL, "|");
@@ -52,6 +74,9 @@ void select_random_questions(Quiz* quiz) {
     
     quiz->selected_count = 0;
 
+    DEBUG_PRINT("Selezionando %d domande casuali da %d disponibili",
+                QUESTIONS_PER_GAME, quiz->total_count);
+
     // Seleziona QUESTIONS_PER_GAME domande casuali
     while (quiz->selected_count < QUESTIONS_PER_GAME) {
         int idx = rand() % quiz->total_count;
@@ -68,6 +93,7 @@ void select_random_questions(Quiz* quiz) {
 
 Quiz* load_quiz(const char* filename) {
     FILE* file = fopen(filename, "r");
+    DEBUG_PRINT("Caricamento del quiz dal file: %s", filename);
     if (!file) return NULL;
     
     Quiz* quiz = malloc(sizeof(Quiz));
@@ -112,9 +138,8 @@ Quiz* load_quiz(const char* filename) {
         return NULL;
     }
     
-    // Seleziona domande casuali per questa partita
-    // select_random_questions(quiz);
-    
+    DEBUG_PRINT("Caricate %d domande dal quiz: %s", quiz->total_count, quiz->topic);
+
     return quiz;
 }
 

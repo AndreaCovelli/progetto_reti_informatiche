@@ -24,18 +24,13 @@ Questo progetto implementa un gioco di quiz multiplayer client-server in C. Il s
 ## Installazione
 ```bash
 # Clone the repository
-git clone https://github.com/AndreaCovelli/progetto_reti.git
+git clone https://github.com/AndreaCovelli/progetto_reti_informatiche.git
 
 # Navigate to project directory
-cd trivia-quiz-multiplayer
+cd progetto_reti_informatiche
 
 # Compile the project
 make
-```
-
-Per la versione di debug:
-```bash
-make debug
 ```
 
 ### Struttura dei File Quiz
@@ -46,8 +41,8 @@ I file dei quiz devono essere posizionati nella cartella `res/` con la seguente 
 Formato del file:
 ```
 Nome del tema
-Domanda 1|Risposta 1
-Domanda 2|Risposta 2
+Domanda 1 | Risposta 1
+Domanda 2 | Risposta 2
 ...
 ```
 
@@ -84,15 +79,63 @@ Domanda 2|Risposta 2
 ```
 .
 ├── include/        # Header files
-├── src/            # Source files
+├── obj/            # File oggetto (creata durante la compilazione)
 ├── res/            # File dei quiz
-└── obj/            # File oggetto (creata durante la compilazione)
+├── src/            # Source files
+├── client
+├── deps_png.dot
+├── deps_svg.dot
+├── domande_casuali_quiz.md
+├── LICENSE
+├── Makefile
+├── output.txt
+├── pacchetto_progetto_triviaquiz.drawio
+├── project_dependencies.png
+├── project_dependencies.svg
+├── ProjectStructure.txt
+├── README.md
+├── repomix-output.txt
+├── server
+├── TriviaQuizClient.png
+├── TriviaQuizClient.txt
+├── TriviaQuizServer.png
+└── TriviaQuizServer.txt
 ```
 
 ## Pulizia del Progetto
 ```bash
 make clean
 ```
+
+## Debug
+
+Il progetto implementa un sistema di debug sofisticato che permette di tracciare l'esecuzione del programma a diversi livelli.
+
+### Compilazione in modalità Debug
+
+La compilazione in modalità debug si ottiene con:
+```bash
+make debug
+```
+Questo genera eseguibili specifici per il debug (client_debug e server_debug) che coesistono con le versioni release, permettendo di alternare facilmente tra le due modalità.
+
+### Sistema di Logging
+
+Il sistema utilizza una macro DEBUG_PRINT configurabile che:
+- Viene attivata solo nelle build di debug attraverso la definizione della macro DEBUG
+- Traccia automaticamente messaggi di sistema critici come connessioni, disconnessioni e scambio di messaggi
+- Fornisce informazioni dettagliate sul flusso di esecuzione senza interferire con le build di produzione
+- Indirizza l'output su stderr per separare i log di debug dall'output normale del programma
+
+### Utilizzo per lo Sviluppo
+
+Durante lo sviluppo è possibile:
+- Osservare il flusso dettagliato della comunicazione client-server
+- Tracciare lo stato interno del gioco
+- Monitorare la gestione della memoria e delle risorse
+- Identificare rapidamente problemi di comunicazione o logica applicativa
+
+La modalità debug si integra naturalmente con strumenti come gdb grazie all'inclusione dei simboli di debug (-g).
 
 ## Note Tecniche
 

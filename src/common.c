@@ -1,4 +1,14 @@
-// Implementazione delle funzioni comuni al server e al client
+/*
+ * common.c
+ * Implementazione delle funzionalità comuni per 'Trivia Quiz Multiplayer'
+ * 
+ * Questo file contiene l'implementazione delle funzioni utilizzate sia dal client
+ * che dal server, inclusa la gestione dei socket, l'invio e la ricezione dei
+ * messaggi, e la conversione dei tipi di messaggio. Fornisce le funzionalità
+ * di base per la comunicazione di rete e la gestione dei protocolli condivisi
+ * tra client e server.
+ */
+
 #include "include/common.h"
 #include <stdio.h>
 #include <string.h>

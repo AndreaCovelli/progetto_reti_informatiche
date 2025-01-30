@@ -15,6 +15,7 @@ domande_casuali_quiz.md
 # Test files
 tests/
 unity/
+.venv/
 
 # Docs
 docs/
@@ -29,6 +30,7 @@ logs/
 *.tmp
 *.temp
 *~
+*-output.txt
 
 # Project specific backups
 *.bak

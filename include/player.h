@@ -10,7 +10,7 @@
  * @param geography_score Punteggio del giocatore nel quiz sulla geografia
  * @param completed_sport true se il giocatore ha completato il quiz sullo sport
  * @param completed_geography true se il giocatore ha completato il quiz sulla geografia
- * @param is_connected true se il giocatore è connesso, false altrimenti
+ * @param is_connected true se un client sta usando quel nickname, false altrimenti
  */
 typedef struct {
     char nickname[MAX_NICK_LENGTH]; // Nickname del giocatore
@@ -56,7 +56,8 @@ void free_player_array(PlayerArray* array);
 bool add_player(PlayerArray* array, const char* nickname);
 
 /**
- * Resetta i punteggi di un giocatore e lo segna come non connesso
+ * Resetta i punteggi di un giocatore e setta il flag che
+ * nessun client sta utilizzando quel nickname
  * @param array PlayerArray* array di giocatori
  * @param nickname const char* nickname del giocatore
  */
@@ -86,15 +87,6 @@ Player* find_player(PlayerArray* array, const char* nickname);
 , l'array viene ordinato per riferimento
  */
 void sort_players_by_score(PlayerArray* array, bool sport_quiz);
-
-/**
- * Ottieni il numero di giocatori attivi
- * @param array PlayerArray* array di giocatori
- * @return numero di giocatori attivi
- */
-/*
-static int get_active_players_count(PlayerArray* array);
-*/
 
 /**
  * Ritorna true se il giocatore ha completato il quiz richiesto

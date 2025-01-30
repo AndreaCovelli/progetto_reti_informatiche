@@ -1,3 +1,13 @@
+/*
+ * score.c
+ * Implementazione della gestione dei punteggi per 'Trivia Quiz Multiplayer'
+ * 
+ * Questo file contiene l'implementazione delle funzioni per la formattazione
+ * e la visualizzazione dei punteggi dei giocatori. Gestisce la creazione
+ * di report dettagliati che includono i punteggi per ogni categoria di quiz
+ * e lo stato di completamento dei quiz per ogni giocatore.
+ */
+
 #include "include/score.h"
 #include <stdio.h>
 #include <string.h>
@@ -23,8 +33,11 @@ char* format_scores(ServerState* state) {
     // Sezione Sport
     offset += snprintf(score_buffer + offset, MAX_MSG_LEN - offset, 
                       "\nPunteggio Sport:\n");
+
     sort_players_by_score(state->players, true);
+
     bool has_sport_scores = false;
+
     for (int i = 0; i < state->players->count; i++) {
         Player* p = &state->players->players[i];
         if (p->sport_score >= 0) {  // Mostra anche punteggi 0
@@ -33,6 +46,7 @@ char* format_scores(ServerState* state) {
             has_sport_scores = true;
         }
     }
+
     if (!has_sport_scores) {
         offset += snprintf(score_buffer + offset, MAX_MSG_LEN - offset, 
                          "Nessun giocatore ha ancora partecipato\n");
@@ -59,7 +73,9 @@ char* format_scores(ServerState* state) {
     // Quiz completati Sport
     offset += snprintf(score_buffer + offset, MAX_MSG_LEN - offset, 
                       "\nQuiz Sport completato da:\n");
+
     bool has_completed_sport = false;
+
     for (int i = 0; i < state->players->count; i++) {
         Player* p = &state->players->players[i];
         if (p->completed_sport) {
@@ -68,6 +84,7 @@ char* format_scores(ServerState* state) {
             has_completed_sport = true;
         }
     }
+    
     if (!has_completed_sport) {
         offset += snprintf(score_buffer + offset, MAX_MSG_LEN - offset, 
                          "Nessun giocatore ha completato questo quiz\n");
@@ -76,7 +93,9 @@ char* format_scores(ServerState* state) {
     // Quiz completati Geografia
     offset += snprintf(score_buffer + offset, MAX_MSG_LEN - offset, 
                       "\nQuiz Geografia completato da:\n");
+
     bool has_completed_geo = false;
+
     for (int i = 0; i < state->players->count; i++) {
         Player* p = &state->players->players[i];
         if (p->completed_geography) {
@@ -85,6 +104,7 @@ char* format_scores(ServerState* state) {
             has_completed_geo = true;
         }
     }
+
     if (!has_completed_geo) {
         offset += snprintf(score_buffer + offset, MAX_MSG_LEN - offset, 
                          "Nessun giocatore ha completato questo quiz\n");

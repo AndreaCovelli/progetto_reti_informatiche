@@ -1,6 +1,17 @@
+/*
+ * player.c
+ * Implementazione della gestione dei giocatori per 'Trivia Quiz Multiplayer'
+ * 
+ * Questo file contiene l'implementazione delle strutture dati e delle funzioni
+ * per gestire i giocatori, i loro punteggi e il loro stato nel gioco. Include
+ * funzionalità per creare, modificare e cercare giocatori, oltre a gestire
+ * l'array dinamico dei giocatori attivi.
+ */
+
+#include "include/player.h"
+#include "include/debug.h"
 #include <stdlib.h>
 #include <string.h>
-#include "include/player.h"
 
 PlayerArray* create_player_array(int initial_capacity) {
     PlayerArray* array = (PlayerArray*)malloc(sizeof(PlayerArray));
@@ -28,6 +39,7 @@ void free_player_array(PlayerArray* array) {
 
 bool add_player(PlayerArray* array, const char* nickname) {
     if (!array || !nickname) return false;
+    DEBUG_PRINT("Aggiungendo il giocatore: %s", nickname);
 
     // Verifica che il giocatore non sia già presente
     if (find_player(array, nickname) != NULL) return false;
@@ -58,11 +70,17 @@ bool add_player(PlayerArray* array, const char* nickname) {
 
 void reset_player_connection(PlayerArray* array, const char* nickname) {
     if (!array || !nickname) return;
+    DEBUG_PRINT("Resettando il punteggio e lo stato di connessione del giocatore: %s",
+                nickname);
 
     Player* player = find_player(array, nickname);
     if (player) {
-        //player->sport_score = 0;
-        //player->geography_score = 0;
+        if (!player->completed_sport) {
+            player->sport_score = 0;
+        }
+        if (!player->completed_geography) {
+            player->geography_score = 0;
+        }
         player->is_connected = false;
     }
 }
@@ -115,7 +133,7 @@ static int compare_players_by_score(const void* a, const void* b, bool sport_qui
     return score_b - score_a;
 }
 /**
- * Confronta due giocatori in base al punteggio dello sport
+ * Confronta due giocatori in base al punteggio Sport
  * @param a const void* puntatore al primo giocatore
  * @param b const void* puntatore al secondo giocatore
  * @return risultato del confronto per qsort
@@ -125,7 +143,7 @@ static int compare_sport_score(const void* a, const void* b) {
 }
 
 /**
- * Confronta due giocatori in base al punteggio della geografia
+ * Confronta due giocatori in base al punteggio Geografia
  * @param a const void* puntatore al primo giocatore
  * @param b const void* puntatore al secondo giocatore
  * @return risultato del confronto per qsort
@@ -142,22 +160,20 @@ void sort_players_by_score(PlayerArray* array, bool sport_quiz) {
           sport_quiz ? compare_sport_score : compare_geography_score);
 }
 
-/*
-int get_active_players_count(PlayerArray* array) {
-    return array ? array->count : 0;
-}
-*/
-
 bool has_completed_quiz(PlayerArray* array, const char* nickname, bool sport_quiz) {
     Player* player = find_player(array, nickname);
-    if (!player) return false;
+    if (!player || !nickname) return false;
     
     return sport_quiz ? player->completed_sport : player->completed_geography;
 }
 
 void mark_quiz_as_completed(PlayerArray* array, const char* nickname, bool sport_quiz) {
     Player* player = find_player(array, nickname);
-    if (!player) return;
+
+    if (!player || !nickname) return;
+
+    DEBUG_PRINT("Segnando per %s come completato il quiz: %s",
+                nickname, sport_quiz ? "Sport" : "Geografia");
     
     if (sport_quiz) {
         player->completed_sport = true;
