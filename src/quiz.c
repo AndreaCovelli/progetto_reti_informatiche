@@ -61,7 +61,7 @@ void select_random_questions(Quiz* quiz) {
     }
     
     // Allochiamo memoria per le nuove domande
-    quiz->selected = malloc(sizeof(Question) * QUESTIONS_PER_GAME);
+    quiz->selected = malloc(sizeof(Question) * QUESTIONS_PER_QUIZ);
     if (!quiz->selected) return;
     
     // Array per tenere traccia degli indici già selezionati
@@ -75,10 +75,10 @@ void select_random_questions(Quiz* quiz) {
     quiz->selected_count = 0;
 
     DEBUG_PRINT("Selezionando %d domande casuali da %d disponibili",
-                QUESTIONS_PER_GAME, quiz->total_count);
+                QUESTIONS_PER_QUIZ, quiz->total_count);
 
-    // Seleziona QUESTIONS_PER_GAME domande casuali
-    while (quiz->selected_count < QUESTIONS_PER_GAME) {
+    // Seleziona QUESTIONS_PER_QUIZ domande casuali
+    while (quiz->selected_count < QUESTIONS_PER_QUIZ) {
         int idx = rand() % quiz->total_count;
         // Se questa domanda non è già stata selezionata
         if (!used[idx]) {

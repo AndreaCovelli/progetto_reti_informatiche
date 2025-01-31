@@ -18,7 +18,9 @@
 // Limite lunghezza nickname
 #define MAX_NICK_LENGTH 20 + 1
 // Limite numero di domande per quiz
-#define QUESTIONS_PER_GAME 5
+#define QUESTIONS_PER_QUIZ 5
+// Limite numero di domande per partita
+#define QUESTIONS_PER_GAME (QUESTIONS_PER_QUIZ*2)
 // Limite numero di domande caricate
 #define MAX_QUESTIONS 100
 // Limite lunghezza domanda

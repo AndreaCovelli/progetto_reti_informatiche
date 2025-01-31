@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 
 /* Funzioni di gestione della connessione */
 
@@ -85,7 +86,7 @@ int show_main_menu() {
     return get_menu_choice();
 }
 
-/* Funzioni di gestione del gioco */
+/* Funzioni di gestione di avvio del gioco */
 
 bool handle_quiz_selection(ClientState* state) {
     char input[10];
@@ -121,73 +122,187 @@ bool handle_quiz_selection(ClientState* state) {
     }
 }
 
-bool handle_nickname_response(Message* msg) {
-    switch (msg->type) {
-        case MSG_LOGIN_SUCCESS:
-            printf("%s\n", msg->payload);
+/* Funzioni di gestione del nickname */
+
+/**
+ * Verifica se un nickname è valido secondo i criteri stabiliti.
+ * Un nickname è considerato valido sse:
+ * - Non è NULL
+ * - Non è vuoto
+ * - Non contiene solo spazi
+ * 
+ * @param nickname Stringa contenente il nickname da validare
+ * @return true se il nickname è valido, false altrimenti
+ */
+static bool is_valid_nickname(const char* nickname) {
+    if (!nickname) return false;
+    
+    const char* p = nickname;
+    while (*p && isspace(*p)) p++;
+    return *p != '\0';
+}
+
+/**
+ * Invia al server una richiesta iniziale di login per iniziare il processo di validazione del nickname.
+ * 
+ * @param state Puntatore allo stato del client
+ * @return true se l'invio è avvenuto con successo, false altrimenti
+ */
+static bool send_initial_login_request(ClientState* state) {
+    Message msg;
+    msg.type = MSG_LOGIN;
+    msg.length = 0;
+    
+    return send_message(state->socket, &msg) >= 0;
+}
+
+/**
+ * Riceve un messaggio di prompt o errore dal server durante la scelta del nickname,
+ * e lo visualizza a video.
+ * 
+ * @param state Puntatore allo stato del client
+ * @param msg Puntatore a una struttura Message per memorizzare il messaggio ricevuto
+ * @return true se la ricezione è avvenuta con successo, false altrimenti
+ */
+static bool receive_show_server_prompt(ClientState* state, Message* msg) {
+    if (receive_message(state->socket, msg) < 0) {
+        printf("Server disconnesso durante la scelta del nickname\n");
+        return false;
+    }
+    
+    // Display the prompt or error message
+    printf("\n%s", msg->payload);
+    return true;
+}
+
+/**
+ * Ottiene un nickname valido dall'utente e lo memorizza nello stato del client.
+ * 
+ * @param state Puntatore allo stato del client
+ * @return true se il nickname è stato inserito con successo, false altrimenti
+ */
+static bool get_valid_nickname_from_user(ClientState* state) {
+    while (true) {
+
+        if (!fgets(state->nickname, MAX_NICK_LENGTH, stdin)) {
+            return false;
+        }
+        
+        state->nickname[strcspn(state->nickname, "\n")] = 0;
+        
+        // Controllo validità del nickname
+        if (is_valid_nickname(state->nickname)) {
             return true;
-
-        case MSG_LOGIN_ERROR:
-            printf("%s\n", msg->payload);
-            return false;
-
-        default:
-            printf("Messaggio inaspettato dal server\n");
-            return false;
+        }
+        
+        printf("Il nickname non può essere vuoto. Riprova: ");
     }
 }
 
-bool send_nickname_request(ClientState* state) {
+/**
+ * Invia il nickname al server per la validazione.
+ * 
+ * @param state Puntatore allo stato del client
+ * @return true se l'invio è avvenuto con successo, false altrimenti
+ */
+static bool send_nickname_to_server(ClientState* state) {
     Message msg;
     msg.type = MSG_REQUEST_NICKNAME;
     msg.length = strlen(state->nickname);
     strncpy(msg.payload, state->nickname, MAX_MSG_LEN);
+    
+    return send_message(state->socket, &msg) >= 0;
+}
 
+/**
+ * Gestisce la risposta del server alla richiesta di validazione del nickname.
+ * 
+ * @param state Puntatore allo stato del client
+ * @param msg Puntatore a una struttura Message per memorizzare il messaggio ricevuto
+ * @param nickname_accepted Puntatore a una variabile booleana per memorizzare l'esito della validazione
+ * @return true se la risposta è stata gestita con successo, false altrimenti
+ */
+static bool handle_server_nickname_response(ClientState* state, Message* msg, bool* nickname_accepted) {
+    if (receive_message(state->socket, msg) < 0) {
+        return false;
+    }
+    
+    switch (msg->type) {
+        case MSG_LOGIN_SUCCESS:
+            printf("%s\n", msg->payload);
+            *nickname_accepted = true;
+            break;
+            
+        case MSG_LOGIN_ERROR:
+            printf("%s\n", msg->payload);
+            *nickname_accepted = false;
+            break;
+            
+        default:
+            printf("Messaggio inaspettato dal server\n");
+            return false;
+    }
+    
+    return true;
+}
+
+/**
+ * Richiede un nuovo prompt al server per inserire un nuovo nickname.
+ * 
+ * @param state Puntatore allo stato del client
+ * @return true se la richiesta è stata inviata con successo, false altrimenti
+ */
+static bool request_new_prompt(ClientState* state) {
+    Message msg;
+    msg.type = MSG_LOGIN;
+    msg.length = 0;
+    
     return send_message(state->socket, &msg) >= 0;
 }
 
 bool validate_and_send_nickname(ClientState* state) {
     Message msg;
-    bool nickname_valid = false;
-
-    msg.type = MSG_LOGIN;
-    msg.length = 0;
-    strncpy(msg.payload, "", MAX_MSG_LEN);
     
-    if (send_message(state->socket, &msg) < 0) {
+    // Richiesta iniziale di login per iniziare il processo di validazione del nickname
+    if (!send_initial_login_request(state)) {
+        if (state->socket != -1) {
+            disconnect_from_server(state);
+        }
         return false;
     }
-
-    while (!nickname_valid) {
-        if (receive_message(state->socket, &msg) < 0) {
-            printf("Server disconnesso durante la scelta del nickname\n");
+    
+    while (true) {
+        // Ottieni il prompt del nickname o il messaggio di errore dal server
+        if (!receive_show_server_prompt(state, &msg)) {
             return false;
         }
-
-        if (msg.type == MSG_NICKNAME_PROMPT) {
-            printf("\n%s", msg.payload);
-            
-            fgets(state->nickname, MAX_NICK_LENGTH, stdin);
-            state->nickname[strcspn(state->nickname, "\n")] = 0;
-            DEBUG_PRINT("Nickname inserito: %s", state->nickname);
-
-            if (!send_nickname_request(state)) {
-                return false;
-            }
-
-            if (receive_message(state->socket, &msg) < 0) {
-                return false;
-            }
-
-            nickname_valid = handle_nickname_response(&msg);
-            DEBUG_PRINT("Risultato validazione nickname: %s", nickname_valid ? "Successo" : "Fallimento");
-        } else {
-            printf("Messaggio inaspettato dal server\n");
+        
+        // Ottieni e valida il nickname dall'input dell'utente
+        if (!get_valid_nickname_from_user(state)) {
+            return false;
+        }
+        
+        // Invia il nickname al server per verificarne la disponibilità
+        if (!send_nickname_to_server(state)) {
+            return false;
+        }
+        
+        // Gestisci la risposta del server sulla disponibilità del nickname
+        bool nickname_accepted = false;
+        if (!handle_server_nickname_response(state, &msg, &nickname_accepted)) {
+            return false;
+        }
+        
+        // Se il nickname è stato accettato, la validazione è completa
+        if (nickname_accepted) {
+            return true;
+        }
+        
+        // Altrimenti, richiedi un nuovo prompt e riprova
+        if (!request_new_prompt(state)) {
             return false;
         }
     }
-
-    return true;
 }
 
 /* Funzioni di gestione delle risposte */
@@ -294,6 +409,7 @@ bool handle_game_message(ClientState* state, Message* msg, char* current_questio
                 return false;
             }
             state->current_question++;
+            DEBUG_PRINT("Domanda corrente: %d", state->current_question);
             break;
             
         case MSG_SCORE:
@@ -353,7 +469,7 @@ bool play_game_session(ClientState* state) {
     DEBUG_PRINT("Avviando una nuova sessione di gioco per il giocatore: %s", state->nickname);
     char current_question[MAX_QUESTION_LENGTH] = {0};
 
-    while (state->current_question < MAX_QUESTIONS) {
+    while (state->current_question <= QUESTIONS_PER_GAME) {
         if (receive_message(state->socket, &msg) < 0) {
             printf("Server disconnesso durante la sessione di gioco\n");
             return false;

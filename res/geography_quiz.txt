@@ -4,7 +4,7 @@ Quale è il fiume più lungo del mondo? | Nilo
 Qual è il paese più piccolo del mondo? | Città del Vaticano
 Quale è il deserto più grande del mondo? | Sahara
 Quale è l'oceano più profondo? | Pacifico
-Quale è la montagna più alta del mondo? | Monte Everest
+Quale è la montagna più alta del mondo? | Everest
 Qual è il lago più profondo del mondo? | Lago Baikal
 Quale continente ha più paesi? | Africa
 Qual è la capitale del Canada? | Ottawa

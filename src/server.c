@@ -329,7 +329,7 @@ void handle_answer(ServerState* state, int client_socket, Message* msg) {
 
 void handle_next_question(ServerState* state, int client_socket, ClientData* client) {
     client->current_question++;
-    if (client->current_question >= QUESTIONS_PER_GAME) {
+    if (client->current_question >= QUESTIONS_PER_QUIZ) {
         handle_quiz_completion(state, client_socket, client);
     } else {
         Quiz* quiz = (client->current_quiz == 1) ? sport_quiz : geography_quiz;
