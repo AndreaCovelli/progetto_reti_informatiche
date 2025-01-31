@@ -6,16 +6,16 @@ Menù:
 ++++++++++++++++++++++++++++++++++++
 La tua scelta:
 
+Trivia Quiz 
++++++++++++++++++++++++++++++++++++++++++
+Scegli un nickname (deve essere univoco):
+
 Quiz disponibili 
 ++++++++++++++++++++++++++++++
 1 - Curiosità sulla tecnologia
 2 - Cultura Generale 
 ++++++++++++++++++++++++++++++
 La tua scelta:
-
-Trivia Quiz 
-+++++++++++++++++++++++++++++++++++++++++
-Scegli un nickname (deve essere univoco):
 
 Quiz - Curiosità sulla tecnologia 
 +++++++++++++++++++++++++++++++++

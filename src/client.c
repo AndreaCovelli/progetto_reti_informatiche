@@ -307,7 +307,7 @@ bool validate_and_send_nickname(ClientState* state) {
 
 /* Funzioni di gestione delle risposte */
 
-bool handle_answer_result(Message* msg) {
+bool print_answer_result(Message* msg) {
     switch (msg->type) {
         case MSG_ANSWER_RESULT:
             printf("%s\n", msg->payload);
@@ -322,7 +322,7 @@ bool handle_answer_result(Message* msg) {
     }
 }
 
-bool send_answer(ClientState* state, const char* answer) {
+bool submit_and_verify_answer(ClientState* state, const char* answer) {
     Message msg;
     msg.type = MSG_ANSWER;
     msg.length = strlen(answer);
@@ -336,7 +336,7 @@ bool send_answer(ClientState* state, const char* answer) {
         return false;
     }
 
-    return handle_answer_result(&msg);
+    return print_answer_result(&msg);
 }
 
 bool handle_special_commands(ClientState* state, const char* answer) {
@@ -363,14 +363,14 @@ bool handle_special_commands(ClientState* state, const char* answer) {
         return true;  // Impedisce l'invio di altri messaggi
     }
     
-    return false;  // Non è un comando speciale
+    return false;  // Non è un comando speciale, errore
 }
 
 bool answer_question(ClientState* state, const char* question) {
     char answer[MAX_ANSWER_LENGTH];
     bool valid_input = false;
 
-    printf("\nDomanda: %s\n", question);
+    printf("%s\n", question);
 
     while (!valid_input) {
         printf("Risposta (o 'show score' per vedere i punteggi, 'endquiz' per uscire): ");
@@ -393,7 +393,7 @@ bool answer_question(ClientState* state, const char* question) {
         return true;
     }
 
-    return send_answer(state, answer);
+    return submit_and_verify_answer(state, answer);
 }
 
 /* Funzioni di gestione della sessione di gioco */

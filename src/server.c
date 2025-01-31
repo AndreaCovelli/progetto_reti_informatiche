@@ -206,8 +206,17 @@ void send_question_to_client(int client_socket, Quiz* quiz, int question_num) {
     if (question) {
         Message msg;
         msg.type = MSG_QUESTION;
-        msg.length = strlen(question->question);
-        strncpy(msg.payload, question->question, MAX_MSG_LEN);
+
+        char formatted_question[MAX_MSG_LEN];
+        snprintf(formatted_question, MAX_MSG_LEN,
+                "\nQuiz %s (domanda %d)\n"
+                "++++++++++++++++++++++++++++++++++++\n"
+                "Domanda: %s",
+                quiz->topic, question_num + 1,
+                question->question);
+
+        msg.length = strlen(formatted_question);
+        strncpy(msg.payload, formatted_question, MAX_MSG_LEN);
         send_message(client_socket, &msg);
     }
 }
@@ -367,6 +376,7 @@ void handle_quiz_completion(ServerState* state, int client_socket, ClientData* c
         return;
     }
 
+    // Invia il messaggio dei quiz disponibili solo se il giocatore non ha completato entrambi i quiz
     if (!sport_completed || !geo_completed) {
         send_quiz_available_message(client_socket, client->nickname);
     }

@@ -95,11 +95,11 @@ bool validate_and_send_nickname(ClientState* state);
 /* Funzioni di gestione delle risposte */
 
 /**
- * Gestisce la risposta del server alla quiz-risposta inviata dal client
+ * Visualizza il risultato della quiz-risposta inviata al server
  * @param msg puntatore al messaggio ricevuto dal server
  * @return true se la quiz-risposta è stata gestita correttamente, false altrimenti
  */
-bool handle_answer_result(Message* msg);
+bool print_answer_result(Message* msg);
 
 /**
  * Gestisce i comandi speciali durante il gioco
@@ -111,13 +111,14 @@ bool handle_answer_result(Message* msg);
 bool handle_special_commands(ClientState* state, const char* answer);
 
 /**
- * Invia una risposta al server
+ * Invia una risposta al server e attende la risposta del server
  * @param state struttura ClientState
  * @param answer risposta da inviare
  * @return true se l'invio ha avuto successo, false altrimenti
  * @note Prepara e invia un messaggio di tipo MSG_ANSWER
+ * @note Gestisce la ricezione del risultato della risposta dal server
  */
-bool send_answer(ClientState* state, const char* answer);
+bool submit_and_verify_answer(ClientState* state, const char* answer);
 
 /**
  * Gestisce la fase in cui il client risponde alle domande
@@ -152,7 +153,8 @@ bool handle_game_message(ClientState* state, Message* msg, char* current_questio
 bool play_game_session(ClientState* state);
 
 /**
- * Gestisce una sessione di gioco completa
+ * Funzione API che viene chiamata dal main per gestire la sessione di gioco
+ * di un client appena connesso
  * @param state struttura ClientState
  * @return true se la sessione termina normalmente, false in caso di errori
  * @note Gestisce l'autenticazione e la partita, inclusa la disconnessione in caso di errori

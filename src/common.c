@@ -130,7 +130,6 @@ ssize_t receive_message(int sock, Message* msg) {
             return ERR_RECV;
         }
         
-        // Ensure null termination
         msg->payload[msg->length] = '\0';
     }
 

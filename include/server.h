@@ -12,7 +12,7 @@
  * @param server_socket Socket del server
  * @param active_fds Set di descrittori attivi
  * @param read_fds Set di descrittori in lettura
- * @param max_fd Massimo descrittore attivo
+ * @param max_fd Massimo indice tra i descrittori attivi
  * @param players Array di giocatori
  */
 typedef struct {
@@ -73,6 +73,12 @@ void init_client_data(int client_socket);
  * @note Chiude tutti i socket aperti
  */
 void cleanup_server(ServerState* state);
+
+/**
+ * Aggiorna l'indice del massimo descrittore attivo (max_fd)
+ * @param state ServerState* struttura del server
+ */
+void update_max_fd(ServerState* state);
 
 /**
  * Gestisce una nuova connessione in arrivo
