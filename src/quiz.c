@@ -52,43 +52,33 @@ static bool parse_question_line(char* line, Question* question) {
     return true;
 }
 
-void select_random_questions(Quiz* quiz) {
-    if (!quiz || quiz->total_count == 0) return;
-    
-    // Liberiamo l'eventuale selezione precedente
-    if (quiz->selected) {
-        free(quiz->selected);
+bool select_random_indices(Quiz* quiz, int* indices) {
+    if (!quiz || !indices || quiz->total_count == 0) {
+        return false;
     }
     
-    // Allochiamo memoria per le nuove domande
-    quiz->selected = malloc(sizeof(Question) * QUESTIONS_PER_QUIZ);
-    if (!quiz->selected) return;
+    // Liberiamo eventuali selezioni precedenti
+    memset(indices, 0, sizeof(int) * QUESTIONS_PER_QUIZ);
     
     // Array per tenere traccia degli indici già selezionati
     bool* used = calloc(quiz->total_count, sizeof(bool));
     if (!used) {
-        free(quiz->selected);
-        quiz->selected = NULL;
-        return;
+        return false;
     }
     
-    quiz->selected_count = 0;
-
-    DEBUG_PRINT("Selezionando %d domande casuali da %d disponibili",
-                QUESTIONS_PER_QUIZ, quiz->total_count);
-
-    // Seleziona QUESTIONS_PER_QUIZ domande casuali
-    while (quiz->selected_count < QUESTIONS_PER_QUIZ) {
+    int selected_count = 0;
+    
+    // Selezioniamo QUESTIONS_PER_QUIZ domande casuali
+    while (selected_count < QUESTIONS_PER_QUIZ) {
         int idx = rand() % quiz->total_count;
-        // Se questa domanda non è già stata selezionata
         if (!used[idx]) {
-            quiz->selected[quiz->selected_count] = quiz->questions[idx];
+            indices[selected_count++] = idx;
             used[idx] = true;
-            quiz->selected_count++;
         }
     }
     
     free(used);
+    return true;
 }
 
 Quiz* load_quiz(const char* filename) {
@@ -143,22 +133,20 @@ Quiz* load_quiz(const char* filename) {
     return quiz;
 }
 
-Question* get_question(Quiz* quiz, int question_num) {
-    if (!quiz || !quiz->selected || question_num < 0 || 
-        question_num >= quiz->selected_count) {
+Question* get_question_by_index(Quiz* quiz, int question_index) {
+    if (!quiz || question_index < 0 || question_index >= quiz->total_count) {
         return NULL;
     }
-    return &quiz->selected[question_num];
+    return &quiz->questions[question_index];
 }
 
-bool check_answer(Quiz* quiz, int question_num, const char* answer) {
-    if (!quiz || !quiz->selected || !answer || 
-        question_num < 0 || question_num >= quiz->selected_count) {
+bool check_answer(Quiz* quiz, int question_index, const char* answer) {
+    if (!quiz || !answer || question_index < 0 || question_index >= quiz->total_count) {
         return false;
     }
-    DEBUG_PRINT("Correct answer: %s\n", quiz->selected[question_num].correct_answer);
+    DEBUG_PRINT("Correct answer: %s\n", quiz->questions[question_index].correct_answer);
     // Confronta le stringhe ignorando maiuscole e minuscole
-    return strcasecmp(quiz->selected[question_num].correct_answer, answer) == 0;
+    return strcasecmp(quiz->questions[question_index].correct_answer, answer) == 0;
 }
 
 int get_question_count(Quiz* quiz) {

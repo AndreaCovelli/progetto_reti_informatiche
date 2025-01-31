@@ -29,12 +29,14 @@ typedef struct {
  * @param current_quiz Numero del quiz attualmente selezionato (1 per sport, 2 per geografia)
  * @param current_question Numero della domanda corrente
  * @param is_playing Indica se il client è attualmente in partita
+ * @param selected_question_indices Indici delle domande selezionate per il quiz
  */
 typedef struct {
     char nickname[MAX_NICK_LENGTH];
     int current_quiz;
     int current_question;
     bool is_playing;
+    int selected_question_indices[QUESTIONS_PER_QUIZ];
 } ClientData;
 
 // Funzioni server
@@ -243,6 +245,18 @@ void handle_quiz_completion(ServerState* state, int client_socket, ClientData* c
  *       '1' per il quiz sport, '2' per il quiz geografia
  */
 void handle_quiz_selection(ServerState* state, int client_socket, Message* msg);
+
+/**
+ * @brief Restituisce la domanda corrente per un client
+ * 
+ * La funzione restituisce un puntatore alla domanda corrente per un client
+ * in base allo stato del quiz e del client.
+ * 
+ * @param quiz Puntatore alla struttura del quiz
+ * @param client Puntatore alla struttura dei dati del client
+ * @return Puntatore alla domanda corrente per il client
+ */
+Question* get_current_question(Quiz* quiz, ClientData* client);
 
 /**
  * @brief Gestisce la risposta di un client ad una domanda del quiz

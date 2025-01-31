@@ -47,12 +47,12 @@ Quiz* load_quiz(const char* filename);
 void free_quiz(Quiz* quiz);
 
 /**
- * Restituisce una domanda del quiz
+ * Restituisce la domanda di un quiz dato l'indice
  * @param quiz Quiz* quiz
  * @param question_num Numero della domanda
  * @return Question* domanda
  */
-Question* get_question(Quiz* quiz, int question_num);
+Question* get_question_by_index(Quiz* quiz, int question_index);
 
 /**
  * Controlla la risposta data dall'utente
@@ -76,6 +76,6 @@ int get_question_count(Quiz* quiz);
  * @note L'inizializzazione del generatore di numeri casuali
  * avviene nel main() del server
  */
-void select_random_questions(Quiz* quiz);
+bool select_random_indices(Quiz* quiz, int* indices);
 
 #endif

@@ -201,7 +201,9 @@ void send_quiz_available_message(int client_socket, const char* nickname) {
 }
 
 void send_question_to_client(int client_socket, Quiz* quiz, int question_num) {
-    Question* question = get_question(quiz, question_num);
+    ClientData* client = &client_data[client_socket];
+    int actual_question_index = client->selected_question_indices[question_num];
+    Question* question = get_question_by_index(quiz, actual_question_index);
     
     if (question) {
         Message msg;
@@ -223,10 +225,19 @@ void send_question_to_client(int client_socket, Quiz* quiz, int question_num) {
 
 /* Funzioni di gestione login */
 
-bool handle_existing_player(ServerState* state, int client_socket, 
-                          Player* player, const char* nickname) {
+bool handle_existing_player(ServerState* state, int client_socket, Player* player, const char* nickname) {
     Message msg;
     
+    // Prima controlliamo se ha completato tutti i quiz
+    if (player->completed_sport && player->completed_geography) {
+        msg.type = MSG_LOGIN_ERROR;
+        strcpy(msg.payload, "Hai già completato tutti i quiz disponibili! Torna presto per nuovi quiz.");
+        msg.length = strlen(msg.payload);
+        send_message(client_socket, &msg);
+        return false;
+    }
+    
+    // Poi controlliamo se è già connesso
     if (player->is_connected) {
         msg.type = MSG_LOGIN_ERROR;
         strcpy(msg.payload, "Nickname già in uso da un altro giocatore");
@@ -235,20 +246,11 @@ bool handle_existing_player(ServerState* state, int client_socket,
         return false;
     }
     
+    // Se arriviamo qui, il giocatore può giocare
     player->is_connected = true;
     strncpy(client_data[client_socket].nickname, nickname, MAX_NICK_LENGTH - 1);
-    msg.type = MSG_LOGIN_SUCCESS;
-
-    // Controlliamo prima se il giocatore ha già completato tutti i quiz
-    if (player->completed_sport && player->completed_geography) {
-        strcpy(msg.payload, "Hai già completato tutti i quiz disponibili! Torna presto per nuovi quiz.");
-        msg.length = strlen(msg.payload);
-        send_message(client_socket, &msg);
-        handle_disconnect(state, client_socket);
-        return false;
-    }
     
-    // Se non ha completato tutti i quiz, diamo il messaggio di benvenuto
+    msg.type = MSG_LOGIN_SUCCESS;
     strcpy(msg.payload, "Bentornato! Inizia un nuovo quiz per mettere alla prova le tue conoscenze!");
     msg.length = strlen(msg.payload);
     send_message(client_socket, &msg);
@@ -299,6 +301,14 @@ void handle_login_request(ServerState* state, int client_socket, Message* msg) {
 
 /* Funzioni di gestione quiz */
 
+Question* get_current_question(Quiz* quiz, ClientData* client) {
+    if (!quiz || !client || client->current_question >= QUESTIONS_PER_QUIZ) {
+        return NULL;
+    }
+    int idx = client->selected_question_indices[client->current_question];
+    return get_question_by_index(quiz, idx);
+}
+
 void handle_answer(ServerState* state, int client_socket, Message* msg) {
     ClientData* client = &client_data[client_socket];
     if (!client->is_playing) return;
@@ -307,7 +317,9 @@ void handle_answer(ServerState* state, int client_socket, Message* msg) {
     msg->payload[msg->length] = '\0';
     DEBUG_PRINT("Ricevuta risposta dal giocatore %s: %s", client->nickname, msg->payload);
     
-    bool correct = check_answer(quiz, client->current_question, msg->payload);
+    int actual_question_index = client->selected_question_indices[client->current_question];
+    
+    bool correct = check_answer(quiz, actual_question_index, msg->payload);
     Player* player = find_player(state->players, client->nickname);
 
     Message response_msg;
@@ -347,10 +359,9 @@ void handle_next_question(ServerState* state, int client_socket, ClientData* cli
 }
 
 void handle_quiz_completion(ServerState* state, int client_socket, ClientData* client) {
+    // Marca il quiz come completato anche se interrotto con endquiz
     mark_quiz_as_completed(state->players, client->nickname, client->current_quiz == 1);
-    DEBUG_PRINT("Quiz completato dal giocatore %s - Quiz numero: %d", 
-                client->nickname, client->current_quiz);
-
+    
     client->is_playing = false;
 
     Message complete_msg;
@@ -364,19 +375,16 @@ void handle_quiz_completion(ServerState* state, int client_socket, ClientData* c
         snprintf(complete_msg.payload, MAX_MSG_LEN, 
                 "Hai completato tutti i quiz disponibili!\n\n%s", scores);
         complete_msg.type = MSG_TRIVIA_COMPLETED;
-        reset_player_connection(state->players, client->nickname);
+        
+        // Non resettiamo più i punteggi
         memset(&client_data[client_socket], 0, sizeof(ClientData));
     } else {
         strcpy(complete_msg.payload, "Quiz completato!");
     }
     
     complete_msg.length = strlen(complete_msg.payload);
-    if (send_message(client_socket, &complete_msg) < 0) {
-        handle_disconnect(state, client_socket);
-        return;
-    }
+    send_message(client_socket, &complete_msg);
 
-    // Invia il messaggio dei quiz disponibili solo se il giocatore non ha completato entrambi i quiz
     if (!sport_completed || !geo_completed) {
         send_quiz_available_message(client_socket, client->nickname);
     }
@@ -407,8 +415,13 @@ void handle_quiz_selection(ServerState* state, int client_socket, Message* msg) 
     client->is_playing = true;
     
     Quiz* selected_quiz_ptr = (client->current_quiz == 1) ? sport_quiz : geography_quiz;
-    select_random_questions(selected_quiz_ptr);
-    send_question_to_client(client_socket, selected_quiz_ptr, client->current_question);
+    select_random_indices(selected_quiz_ptr, client->selected_question_indices);
+    
+    Question* first_question = get_current_question(selected_quiz_ptr, client);
+    if (first_question) {
+        send_question_to_client(client_socket, selected_quiz_ptr, 
+                              client->current_question);
+    }
 }
 
 /* Funzioni di gestione server */
@@ -496,13 +509,22 @@ void process_client_message(ServerState* state, int client_socket) {
                 ClientData* client = &client_data[client_socket];
                 client->is_playing = false;
                 if (strlen(client->nickname) > 0) {
-                    reset_player_connection(state->players, client->nickname);
-                    memset(client, 0, sizeof(ClientData));
+                    mark_quiz_as_completed(state->players, client->nickname, 
+                                                    client->current_quiz == 1);
                     
+                    Player* player = find_player(state->players, client->nickname);
+                    if (player) {
+                        player->is_connected = false;
+                    }
+                    
+                    memset(client, 0, sizeof(ClientData));
+
                     // Invia conferma al client
                     Message response;
                     response.type = MSG_QUIZ_COMPLETED;
-                    strncpy(response.payload, "Endquiz ricevuto. Ridirezione al menu principale.", MAX_MSG_LEN);
+                    strncpy(response.payload, 
+                    "Quiz terminato. Ridirezione al menu principale.", 
+                    MAX_MSG_LEN);
                     response.length = strlen(response.payload);
                     send_message(client_socket, &response);
                 }

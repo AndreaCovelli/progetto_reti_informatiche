@@ -80,12 +80,6 @@ void reset_player_connection(PlayerArray* array, const char* nickname) {
 
     Player* player = find_player(array, nickname);
     if (player) {
-        if (!player->completed_sport) {
-            player->sport_score = 0;
-        }
-        if (!player->completed_geography) {
-            player->geography_score = 0;
-        }
         player->is_connected = false;
     }
 }
