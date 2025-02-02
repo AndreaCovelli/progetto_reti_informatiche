@@ -54,7 +54,7 @@ bool init_server_socket(ServerState* state, const char* ip, int port);
  * Inizializza il server e le sue strutture dati
  * @param ip indirizzo ip del server    
  * @param port porta del server
- * @note Initializes file descriptor sets for select().
+ * @note Inizializza i set di file descriptor select().
  * Inizializza read, write e error set
  * @return Restituisce la struttura ServerState inizializzata
  */
@@ -104,7 +104,14 @@ void process_client_message(ServerState* state, int client_socket);
 void broadcast_message(ServerState* state, Message* msg);
 
 /**
- * Gestisce la disconnessione di un client
+ * @brief Gestisce la disconnessione di un client
+ * 
+ * Se il client non ha terminato un quiz, il punteggio attuale viene
+ * salvato ma verrà segnato come completato.
+ * 
+ * Il nickname del client rimane salvato e può riconnettersi in seguito.
+ * 
+ * Non essendoci una password di autenticazione, chiunque può riconnettersi con lo stesso nickname.
  * @param state ServerState* struttura del server
  * @param client_socket socket del client
  * @note Rimuove il client dai descrittori attivi

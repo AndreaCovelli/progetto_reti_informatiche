@@ -42,7 +42,7 @@ static void format_participants_section(const ServerState* state, char* buffer, 
  * @param buffer buffer di output
  * @param offset offset attuale del buffer
  * @param is_sport_quiz true se si vuole ordinare i giocatori
- * per il punteggio del quiz sullo sport, false per il quiz sulla geografia
+ * per il punteggio del quiz sullo sport, false per il quiz Geografia
  * @note Utilizza qsort per ordinare i giocatori in base al punteggio.
  */
 static void format_quiz_scores(const ServerState* state, char* buffer, int* offset, 
@@ -76,7 +76,7 @@ static void format_quiz_scores(const ServerState* state, char* buffer, int* offs
  * @param state puntatore allo stato del server
  * @param buffer buffer di output
  * @param offset offset attuale del buffer
- * @param is_sport_quiz true se si vuole formattare la sezione per il quiz sullo sport
+ * @param is_sport_quiz true se si vuole formattare la sezione per il quiz Sport, false per Geografia
  * @note Aggiunge i nomi dei giocatori che hanno completato il quiz al buffer.
  * @note Se nessun giocatore ha completato il quiz, aggiunge una semplice nota.
  */

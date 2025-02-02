@@ -33,7 +33,7 @@ typedef struct {
 int create_socket();
 
 /**
- * Configura una connessione socket
+ * Configura una connessione socket con 'connect' finale
  * @param ip indirizzo ip
  * @param port porta
  * @return file descriptor del socket o -1 in caso di errore

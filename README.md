@@ -3,7 +3,7 @@
 ![Immmagine](project_dependencies.png)
 
 ### Descrizione
-Questo progetto implementa un gioco di quiz multiplayer client-server in C. Il sistema permette a più giocatori di partecipare contemporaneamente a quiz su diversi temi (Sport e Geografia), mantenendo punteggi e classifiche separate per ogni tema.
+Questo progetto implementa un gioco di quiz multiplayer client-server in C. Il sistema permette a più giocatori di partecipare contemporaneamente a quiz su diversi temi (Sport e Geografia), mantenendo punteggi e classifiche separate per ogni tema. Essendo a basso livello, il progetto è stato sviluppato con l'obiettivo di fornire una base solida per l'apprendimento dei concetti di programmazione di rete.
 
 ## Caratteristiche Principali
 
@@ -41,10 +41,11 @@ I file dei quiz devono essere posizionati nella cartella `res/` con la seguente 
 Formato del file:
 ```
 Nome del tema
-Domanda 1 | Risposta 1
-Domanda 2 | Risposta 2
+Domanda-1 | Risposta-1
+Domanda-2 | Risposta-2
 ...
 ```
+Eventuali spazi bianchi o righe vuote vengono ignorati automaticamente.
 
 ## Utilizzo
 ### Avvio del Server
@@ -62,10 +63,10 @@ Domanda 2 | Risposta 2
 
 ## Funzionalità Dettagliate
 ### Server
-- Gestione concorrente dei client tramite I/O multiplexing (select)
+- Gestione concorrente dei client tramite I/O multiplexing (`select`)
 - Selezione casuale delle domande per ogni sessione
 - Gestione delle disconnessioni dei client
-- Mantenimento delle classifiche
+- Mantenimento delle classifiche e della sessione di gioco se il client si disconnette e non ha ancora completato tutti i quiz
 - Validazione dei nickname
 
 ### Client
@@ -88,13 +89,11 @@ Domanda 2 | Risposta 2
 ├── domande_casuali_quiz.md
 ├── LICENSE
 ├── Makefile
-├── output.txt
 ├── pacchetto_progetto_triviaquiz.drawio
 ├── project_dependencies.png
 ├── project_dependencies.svg
 ├── ProjectStructure.txt
 ├── README.md
-├── repomix-output.txt
 ├── server
 ├── TriviaQuizClient.png
 ├── TriviaQuizClient.txt
@@ -102,14 +101,14 @@ Domanda 2 | Risposta 2
 └── TriviaQuizServer.txt
 ```
 
-## Pulizia del Progetto
+## Pulizia dei file oggetto
 ```bash
 make clean
 ```
 
 ## Debug
 
-Il progetto implementa un sistema di debug sofisticato che permette di tracciare l'esecuzione del programma a diversi livelli.
+Il progetto implementa un sistema di debug che permette di tracciare l'esecuzione del programma inserendo messaggi di log dettagliati. Questo sistema può essere attivato secondo le indicazioni sottostanti.
 
 ### Compilazione in modalità Debug
 
@@ -118,14 +117,15 @@ La compilazione in modalità debug si ottiene con:
 make debug
 ```
 Questo genera eseguibili specifici per il debug (client_debug e server_debug) che coesistono con le versioni release, permettendo di alternare facilmente tra le due modalità.
+Inoltre abilita la macro DEBUG che attiva il sistema di logging.
 
 ### Sistema di Logging
 
-Il sistema utilizza una macro DEBUG_PRINT configurabile che:
-- Viene attivata solo nelle build di debug attraverso la definizione della macro DEBUG
+Il sistema utilizza una macro `DEBUG_PRINT` configurabile che:
+- Viene attivata solo nelle build di debug attraverso la definizione della macro `DEBUG`
 - Traccia automaticamente messaggi di sistema critici come connessioni, disconnessioni e scambio di messaggi
-- Fornisce informazioni dettagliate sul flusso di esecuzione senza interferire con le build di produzione
-- Indirizza l'output su stderr per separare i log di debug dall'output normale del programma
+- Fornisce informazioni dettagliate sul flusso di esecuzione senza interferire con le productions builds
+- Indirizza l'output su `stderr` per separare i log di debug dall'output normale del programma
 
 ### Utilizzo per lo Sviluppo
 
@@ -133,16 +133,16 @@ Durante lo sviluppo è possibile:
 - Osservare il flusso dettagliato della comunicazione client-server
 - Tracciare lo stato interno del gioco
 - Monitorare la gestione della memoria e delle risorse
-- Identificare rapidamente problemi di comunicazione o logica applicativa
+- Identificare rapidamente problemi di comunicazione o di logica applicativa
 
-La modalità debug si integra naturalmente con strumenti come gdb grazie all'inclusione dei simboli di debug (-g).
+La modalità debug si integra naturalmente con strumenti come gdb grazie all'inclusione dei simboli di debug (`-g`).
 
 ## Note Tecniche
 
 - Il progetto utilizza il protocollo TCP per la comunicazione
 - Implementa una gestione robusta degli errori
 - Supporta la compilazione sia in modalità release che debug
-- Utilizza strutture dati dinamiche per la gestione dei giocatori e delle domande
+- Utilizza strutture dati dinamiche per la gestione dei giocatori e delle domande, garantendo scalabilità e flessibilità
 
 ## Autore
 - Andrea Covelli

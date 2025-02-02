@@ -99,6 +99,8 @@ void update_max_fd(ServerState* state) {
 
 void init_client_data(int client_socket) {
     memset(&client_data[client_socket], 0, sizeof(ClientData));
+    
+    // All'inizio il client non è in partita
     client_data[client_socket].is_playing = false;
 }
 
@@ -579,7 +581,7 @@ int main(int argc, char* argv[]) {
 
     DEBUG_PRINT("Server avviato sulla porta %s", argv[1]);
     
-    server_state = state;  // Salva il riferimento globale
+    server_state = state;  // Salva nel riferimento globale
     display_server_status(state);
 
     // Imposta i gestori dei segnali

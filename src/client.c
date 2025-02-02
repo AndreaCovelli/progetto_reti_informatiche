@@ -271,34 +271,30 @@ bool validate_and_send_nickname(ClientState* state) {
         return false;
     }
     
+    // Qui sotto ho diviso la logica di validazione del nickname in più funzioni
+    // perchè avremmo avuto una funzione con troppe responsabilità
     while (true) {
-        // Ottieni il prompt del nickname o il messaggio di errore dal server
         if (!receive_show_server_prompt(state, &msg)) {
             return false;
         }
         
-        // Ottieni e valida il nickname dall'input dell'utente
         if (!get_valid_nickname_from_user(state)) {
             return false;
         }
         
-        // Invia il nickname al server per verificarne la disponibilità
         if (!send_nickname_to_server(state)) {
             return false;
         }
         
-        // Gestisci la risposta del server sulla disponibilità del nickname
         bool nickname_accepted = false;
         if (!handle_server_nickname_response(state, &msg, &nickname_accepted)) {
             return false;
         }
         
-        // Se il nickname è stato accettato, la validazione è completa
         if (nickname_accepted) {
             return true;
         }
         
-        // Altrimenti, richiedi un nuovo prompt e riprova
         if (!request_new_prompt(state)) {
             return false;
         }
