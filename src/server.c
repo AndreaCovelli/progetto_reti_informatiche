@@ -164,8 +164,13 @@ void send_nickname_prompt(int client_socket) {
                         "+++++++++++++++++++++++++++++++++++++++++\n"
                         "Scegli un nickname (deve essere univoco): ";
     msg.length = strlen(prompt);
-    strncpy(msg.payload, prompt, MAX_MSG_LEN);
+    msg.payload = malloc(msg.length + 1);
+
+    if (!msg.payload) return;
+    strcpy(msg.payload, prompt);
+
     send_message(client_socket, &msg);
+    free(msg.payload);
 }
 
 void send_quiz_available_message(int client_socket, const char* nickname) {
@@ -175,31 +180,37 @@ void send_quiz_available_message(int client_socket, const char* nickname) {
     bool sport_completed = has_completed_quiz(server_state->players, nickname, true);
     bool geo_completed = has_completed_quiz(server_state->players, nickname, false);
     
-    char available[MAX_MSG_LEN];
-    int offset = snprintf(available, MAX_MSG_LEN,
+    // Uso un buffer temporaneo per costruire il messaggio
+    // Per soli due quiz, è sufficiente 1024 byte, per più quiz si potrebbe implementare
+    // un buffer dinamico
+    char available_temp[1024];
+    int offset = snprintf(available_temp, sizeof(available_temp),
              "Quiz disponibili\n"
              "++++++++++++++++++++++++++++++\n");
              
     if (!sport_completed) {
-        offset += snprintf(available + offset, MAX_MSG_LEN - offset, "1 - Sport\n");
+        offset += snprintf(available_temp + offset, sizeof(available_temp) - offset, "1 - Sport\n");
     }
     
     if (!geo_completed) {
-        offset += snprintf(available + offset, MAX_MSG_LEN - offset, "2 - Geografia\n");
+        offset += snprintf(available_temp + offset, sizeof(available_temp) - offset, "2 - Geografia\n");
     }
     
     if (sport_completed && geo_completed) {
-        snprintf(available, MAX_MSG_LEN,
+        snprintf(available_temp, sizeof(available_temp),
                 "Non ci sono più quiz disponibili.\n"
                 "Hai completato tutti i quiz!\n");
     } else {
-        snprintf(available + offset, MAX_MSG_LEN - offset, 
+        snprintf(available_temp + offset, sizeof(available_temp) - offset, 
                 "++++++++++++++++++++++++++++++\n");
     }
 
-    msg.length = strlen(available);
-    strncpy(msg.payload, available, MAX_MSG_LEN);
+    msg.length = strlen(available_temp);
+    msg.payload = malloc(msg.length + 1);
+    if (!msg.payload) return;
+    strcpy(msg.payload, available_temp);
     send_message(client_socket, &msg);
+    free(msg.payload);
 }
 
 void send_question_to_client(int client_socket, Quiz* quiz, int question_num) {
@@ -211,8 +222,8 @@ void send_question_to_client(int client_socket, Quiz* quiz, int question_num) {
         Message msg;
         msg.type = MSG_QUESTION;
 
-        char formatted_question[MAX_MSG_LEN];
-        snprintf(formatted_question, MAX_MSG_LEN,
+        char formatted_question[1024];  // Uso un buffer temporaneo per costruire il messaggio
+        snprintf(formatted_question, sizeof(formatted_question),
                 "\nQuiz %s (domanda %d)\n"
                 "++++++++++++++++++++++++++++++++++++\n"
                 "Domanda: %s",
@@ -220,8 +231,11 @@ void send_question_to_client(int client_socket, Quiz* quiz, int question_num) {
                 question->question);
 
         msg.length = strlen(formatted_question);
-        strncpy(msg.payload, formatted_question, MAX_MSG_LEN);
+        msg.payload = malloc(msg.length + 1);
+        if (!msg.payload) return;
+        strcpy(msg.payload, formatted_question);
         send_message(client_socket, &msg);
+        free(msg.payload);
     }
 }
 
@@ -233,18 +247,26 @@ bool handle_existing_player(ServerState* state, int client_socket, Player* playe
     // Prima controlliamo se ha completato tutti i quiz
     if (player->completed_sport && player->completed_geography) {
         msg.type = MSG_LOGIN_ERROR;
-        strcpy(msg.payload, "Hai già completato tutti i quiz disponibili! Torna presto per nuovi quiz.");
-        msg.length = strlen(msg.payload);
+        const char* text = "Hai già completato tutti i quiz disponibili! Torna presto per nuovi quiz.";
+        msg.length = strlen(text);
+        msg.payload = malloc(msg.length + 1);
+        if (!msg.payload) return false;
+        strcpy(msg.payload, text);
         send_message(client_socket, &msg);
+        free(msg.payload);
         return false;
     }
     
     // Poi controlliamo se è già connesso
     if (player->is_connected) {
         msg.type = MSG_LOGIN_ERROR;
-        strcpy(msg.payload, "Nickname già in uso da un altro giocatore");
-        msg.length = strlen(msg.payload);
+        const char* text = "Nickname già in uso da un altro giocatore";
+        msg.length = strlen(text);
+        msg.payload = malloc(msg.length + 1);
+        if (!msg.payload) return false;
+        strcpy(msg.payload, text);
         send_message(client_socket, &msg);
+        free(msg.payload);
         return false;
     }
     
@@ -253,9 +275,13 @@ bool handle_existing_player(ServerState* state, int client_socket, Player* playe
     strncpy(client_data[client_socket].nickname, nickname, MAX_NICK_LENGTH - 1);
     
     msg.type = MSG_LOGIN_SUCCESS;
-    strcpy(msg.payload, "Bentornato! Inizia un nuovo quiz per mettere alla prova le tue conoscenze!");
-    msg.length = strlen(msg.payload);
+    const char* text = "Bentornato! Inizia un nuovo quiz per mettere alla prova le tue conoscenze!";
+    msg.length = strlen(text);
+    msg.payload = malloc(msg.length + 1);
+    if (!msg.payload) return false;
+    strcpy(msg.payload, text);
     send_message(client_socket, &msg);
+    free(msg.payload);
     
     display_server_status(state);
     send_quiz_available_message(client_socket, nickname);
@@ -264,8 +290,11 @@ bool handle_existing_player(ServerState* state, int client_socket, Player* playe
 
 bool handle_new_player(ServerState* state, int client_socket, const char* nickname) {
     
-    // Controlla se il server ha raggiunto la massima capacità di giocatori
-    if (!add_player(state->players, nickname)) {
+    // Aggiungiamo il giocatore alla lista
+    bool success = add_player(state->players, nickname);
+
+    // Se non c'è spazio per il nuovo giocatore, inviamo un messaggio di errore
+    if (!success) {
         Message msg;
         msg.type = MSG_LOGIN_ERROR;
         strcpy(msg.payload, "Il server ha raggiunto la massima capacità di giocatori, riprova più tardi.");
@@ -281,9 +310,15 @@ bool handle_new_player(ServerState* state, int client_socket, const char* nickna
     
     Message msg;
     msg.type = MSG_LOGIN_SUCCESS;
-    strcpy(msg.payload, "Login avvenuto con successo!");
-    msg.length = strlen(msg.payload);
+    const char* text = "Login avvenuto con successo!";
+    msg.length = strlen(text);
+    msg.payload = malloc(msg.length + 1);
+
+    if (!msg.payload) return false;
+
+    strcpy(msg.payload, text);
     send_message(client_socket, &msg);
+    free(msg.payload);
     
     display_server_status(state);
     send_quiz_available_message(client_socket, nickname);
@@ -326,13 +361,21 @@ void handle_answer(ServerState* state, int client_socket, Message* msg) {
 
     Message response_msg;
     response_msg.type = MSG_ANSWER_RESULT;
-    strcpy(response_msg.payload, correct ? "Risposta corretta!" : "Risposta errata!");
-    response_msg.length = strlen(response_msg.payload);
-    
-    if (send_message(client_socket, &response_msg) < 0) {
+    const char* text = correct ? "Risposta corretta!" : "Risposta errata!";
+    response_msg.length = strlen(text);
+    response_msg.payload = malloc(response_msg.length + 1);
+    if (!response_msg.payload) {
         handle_disconnect(state, client_socket);
         return;
     }
+    strcpy(response_msg.payload, text);
+
+    if (send_message(client_socket, &response_msg) < 0) {
+        free(response_msg.payload);
+        handle_disconnect(state, client_socket);
+        return;
+    }
+    free(response_msg.payload);
     
     if (player) {
         if (client->current_quiz == 1) {
@@ -372,22 +415,37 @@ void handle_quiz_completion(ServerState* state, int client_socket, ClientData* c
     bool sport_completed = has_completed_quiz(state->players, client->nickname, true);
     bool geo_completed = has_completed_quiz(state->players, client->nickname, false);
     
+    char *msg_text = NULL;
     if (sport_completed && geo_completed) {
-        char* scores = format_scores(state);
-        snprintf(complete_msg.payload, MAX_MSG_LEN, 
-                "Hai completato tutti i quiz disponibili!\n\n%s", scores);
+        char* scores = format_scores(state);  // Now returns a dynamically allocated string
+        int len = snprintf(NULL, 0, "Hai completato tutti i quiz disponibili!\n\n%s", scores);
+        msg_text = malloc(len + 1);
+        if (!msg_text) {
+            free(scores);
+            return;
+        }
+        snprintf(msg_text, len + 1, "Hai completato tutti i quiz disponibili!\n\n%s", scores);
+        free(scores);
         complete_msg.type = MSG_TRIVIA_COMPLETED;
-        
-        // Non resettiamo più i punteggi
-        memset(&client_data[client_socket], 0, sizeof(ClientData));
     } else {
-        strcpy(complete_msg.payload, "Quiz completato!");
+        const char *temp = "Quiz completato!";
+        msg_text = malloc(strlen(temp) + 1);
+        if (!msg_text) return;
+        strcpy(msg_text, temp);
     }
     
-    complete_msg.length = strlen(complete_msg.payload);
+    complete_msg.length = strlen(msg_text);
+    complete_msg.payload = malloc(complete_msg.length + 1);
+    if (!complete_msg.payload) {
+        free(msg_text);
+        return;
+    }
+    strcpy(complete_msg.payload, msg_text);
+    free(msg_text);
     send_message(client_socket, &complete_msg);
+    free(complete_msg.payload);
 
-    if (!sport_completed || !geo_completed) {
+    if (!(sport_completed && geo_completed)) {
         send_quiz_available_message(client_socket, client->nickname);
     }
 }
@@ -402,10 +460,13 @@ void handle_quiz_selection(ServerState* state, int client_socket, Message* msg) 
     if ((selected_quiz == 1 && sport_completed) || 
         (selected_quiz == 2 && geo_completed)) {
         msg->type = MSG_QUIZ_AVAILABLE;
-        snprintf(msg->payload, MAX_MSG_LEN, 
-            "Quiz non disponibile. Seleziona un quiz dalla lista.\n");
-        msg->length = strlen(msg->payload);
+        const char* error_text = "Quiz non disponibile. Seleziona un quiz dalla lista.\n";
+        msg->length = strlen(error_text);
+        msg->payload = malloc(msg->length + 1);
+        if (!msg->payload) return;
+        strcpy(msg->payload, error_text);
         send_message(client_socket, msg);
+        free(msg->payload);
         send_quiz_available_message(client_socket, client->nickname);
         return;
     }
@@ -440,10 +501,14 @@ void handle_shutdown() {
     if (server_state) {
         Message msg;
         msg.type = MSG_DISCONNECT;
-        msg.length = strlen("Server shutdown");
-        strncpy(msg.payload, "Server shutdown", MAX_MSG_LEN - 1);
-        
-        broadcast_message(server_state, &msg);
+        const char* text = "Server shutdown";
+        msg.length = strlen(text);
+        msg.payload = malloc(msg.length + 1);
+        if (msg.payload) {
+            strcpy(msg.payload, text);
+            broadcast_message(server_state, &msg);
+            free(msg.payload);
+        }
         cleanup_server(server_state);
     }
     exit(0);
@@ -498,15 +563,23 @@ void process_client_message(ServerState* state, int client_socket) {
             break;
 
         case MSG_REQUEST_SCORE:
-            char* scores = format_scores(state);
-            msg.type = MSG_SCORE;
-            msg.length = strlen(scores);
-            strncpy(msg.payload, scores, MAX_MSG_LEN - 1);
-            msg.payload[MAX_MSG_LEN - 1] = '\0';
-            send_message(client_socket, &msg);
-            break;
+            {
+                char* scores = format_scores(state);
+                msg.type = MSG_SCORE;
+                msg.length = strlen(scores);
+                msg.payload = malloc(msg.length + 1);
+                if (!msg.payload) {
+                    free(scores);
+                    break;
+                }
+                strcpy(msg.payload, scores);
+                send_message(client_socket, &msg);
+                free(msg.payload);
+                free(scores);
+                break;
+            }
         
-        case MSG_END_QUIZ:
+        case MSG_END_QUIZ: 
             {
                 ClientData* client = &client_data[client_socket];
                 client->is_playing = false;
@@ -524,14 +597,17 @@ void process_client_message(ServerState* state, int client_socket) {
                     // Invia conferma al client
                     Message response;
                     response.type = MSG_QUIZ_COMPLETED;
-                    strncpy(response.payload, 
-                    "Quiz terminato. Ridirezione al menu principale.", 
-                    MAX_MSG_LEN);
-                    response.length = strlen(response.payload);
-                    send_message(client_socket, &response);
+                    const char* text = "Quiz terminato. Ridirezione al menu principale.";
+                    response.length = strlen(text);
+                    response.payload = malloc(response.length + 1);
+                    if (response.payload) {
+                        strcpy(response.payload, text);
+                        send_message(client_socket, &response);
+                        free(response.payload);
+                    }
                 }
+                break;
             }
-            break;
 
         case MSG_DISCONNECT:
             handle_disconnect(state, client_socket);

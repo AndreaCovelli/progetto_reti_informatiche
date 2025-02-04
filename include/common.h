@@ -21,7 +21,7 @@
 typedef struct {
     MessageType type;
     int length;
-    char payload[MAX_MSG_LEN];
+    char *payload;
 } Message;
 
 // Funzioni di utilità rete

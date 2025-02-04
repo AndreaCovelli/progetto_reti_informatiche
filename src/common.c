@@ -11,6 +11,7 @@
 
 #include "include/common.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
@@ -120,17 +121,18 @@ ssize_t receive_message(int sock, Message* msg) {
     
     // Poi ricevo il payload sse presente
     if (msg->length > 0) {
-        if (msg->length > MAX_MSG_LEN) {
+        msg->payload = malloc(msg->length + 1);
+        if (!msg->payload) {
             return ERR_RECV;
         }
-        
         received = recv(sock, msg->payload, msg->length, 0);
-        if (received <= 0) {  // Cambiato da != a <= per individuare la disconnessione
-            printf("Server disconnesso\n");
+        if (received <= 0) {
+            free(msg->payload);
             return ERR_RECV;
         }
-        
         msg->payload[msg->length] = '\0';
+    } else {
+        msg->payload = NULL;
     }
 
     DEBUG_PRINT("Ricevuto messaggio di tipo %s, lunghezza %d, payload (primi 10 caratteri): %.20s\n", 

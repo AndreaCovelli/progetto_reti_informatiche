@@ -88,7 +88,7 @@ int show_main_menu() {
 
 /* Funzioni di gestione di avvio del gioco */
 
-bool handle_quiz_selection(ClientState* state) {
+bool handle_user_quiz_selection(ClientState* state) {
     char input[10];
     int old_quiz = state->current_quiz;
     
@@ -152,6 +152,7 @@ static bool send_initial_login_request(ClientState* state) {
     Message msg;
     msg.type = MSG_LOGIN;
     msg.length = 0;
+    msg.payload = NULL;
     
     return send_message(state->socket, &msg) >= 0;
 }
@@ -209,9 +210,15 @@ static bool send_nickname_to_server(ClientState* state) {
     Message msg;
     msg.type = MSG_REQUEST_NICKNAME;
     msg.length = strlen(state->nickname);
-    strncpy(msg.payload, state->nickname, MAX_MSG_LEN);
-    
-    return send_message(state->socket, &msg) >= 0;
+    msg.payload = malloc(msg.length + 1);
+
+    if (!msg.payload)
+        return false;
+    strcpy(msg.payload, state->nickname);
+
+    bool success = send_message(state->socket, &msg) >= 0;
+    free(msg.payload);
+    return success;
 }
 
 /**
@@ -322,17 +329,23 @@ bool submit_and_verify_answer(ClientState* state, const char* answer) {
     Message msg;
     msg.type = MSG_ANSWER;
     msg.length = strlen(answer);
-    strncpy(msg.payload, answer, MAX_MSG_LEN);
+    msg.payload = malloc(msg.length + 1);
+    if (!msg.payload) return false;
+    strcpy(msg.payload, answer);
     
     if (send_message(state->socket, &msg) < 0) {
+        free(msg.payload);
         return false;
     }
-
+    free(msg.payload);  // Free dopo l'invio
+    
     if (receive_message(state->socket, &msg) < 0) {
         return false;
     }
-
-    return print_answer_result(&msg);
+    
+    bool result = print_answer_result(&msg);
+    free(msg.payload);  // Free dopo aver ricevuto il risultato
+    return result;
 }
 
 bool handle_special_commands(ClientState* state, const char* answer) {
@@ -341,18 +354,28 @@ bool handle_special_commands(ClientState* state, const char* answer) {
     if (strcmp(answer, "show score") == 0) {
         msg.type = MSG_REQUEST_SCORE;
         msg.length = strlen(answer);
-        strncpy(msg.payload, answer, MAX_MSG_LEN);
-        return send_message(state->socket, &msg) >= 0;
-    } 
+        msg.payload = malloc(msg.length + 1);
+        if (!msg.payload) return false;
+        strcpy(msg.payload, answer);
+        bool success = send_message(state->socket, &msg) >= 0;
+        free(msg.payload);
+        return success;
+    }
     
     if (strcmp(answer, "endquiz") == 0) {
         msg.type = MSG_END_QUIZ;
         msg.length = strlen(answer);
-        strncpy(msg.payload, answer, MAX_MSG_LEN);
+        msg.payload = malloc(msg.length + 1);
+
+        if (!msg.payload) return false;
+        
+        strcpy(msg.payload, answer);
         send_message(state->socket, &msg);
+        free(msg.payload);
 
         if (receive_message(state->socket, &msg) >= 0) {
             printf("%s\n", msg.payload);
+            free(msg.payload);
         }
 
         disconnect_from_server(state);
@@ -417,13 +440,19 @@ bool handle_game_message(ClientState* state, Message* msg, char* current_questio
             
         case MSG_QUIZ_AVAILABLE:
             printf("\n%s", msg->payload);
-            if (!handle_quiz_selection(state)) {
+            if (!handle_user_quiz_selection(state)) {
                 return false;
             }
             
             Message quiz_msg;
             quiz_msg.type = MSG_REQUEST_QUESTION;
             quiz_msg.length = 1;
+            quiz_msg.payload = malloc(quiz_msg.length + 1);
+            if (quiz_msg.payload == NULL) {
+                fprintf(stderr, "Memory allocation failed\n");
+                return false;
+            }
+
             quiz_msg.payload[0] = state->current_quiz + '0';
             quiz_msg.payload[1] = '\0';
             
@@ -488,7 +517,7 @@ void disconnect_from_server(ClientState* state) {
         Message msg;
         msg.type = MSG_DISCONNECT;
         msg.length = 0;
-        strncpy(msg.payload, "", MAX_MSG_LEN);
+        msg.payload = NULL;
         
         send_message(state->socket, &msg);
         

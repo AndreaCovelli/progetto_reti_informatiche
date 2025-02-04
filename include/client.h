@@ -81,7 +81,7 @@ int show_main_menu();
  * @return true se la selezione è valida, false altrimenti
  * @note Permette all'utente di scegliere tra quiz sport (1) o geografia (2)
  */
-bool handle_quiz_selection(ClientState* state);
+bool handle_user_quiz_selection(ClientState* state);
 
 /**
  * Gestisce l'input del nickname, l'invio, e la validazione
