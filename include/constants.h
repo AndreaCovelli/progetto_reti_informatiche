@@ -7,7 +7,7 @@
 // Capacità iniziale dell'array di giocatori
 #define INITIAL_PLAYER_ARRAY_SIZE 10
 // Numero massimo di giocatori
-#define MAX_PLAYERS 20
+#define MAX_PLAYERS 1020
 
 // Limiti buffer
 #define BUFFER_SIZE 1024
@@ -21,6 +21,8 @@
 #define QUESTIONS_PER_QUIZ 5
 // Limite numero di domande per partita
 #define QUESTIONS_PER_GAME (QUESTIONS_PER_QUIZ*2)
+// Limite numero massimo di possibili risposte corrette per domanda
+#define MAX_CORRECT_ANSWERS 5
 // Limite numero di domande caricate
 #define MAX_QUESTIONS 100
 // Limite lunghezza domanda

@@ -12,6 +12,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
+
+
+/**
+ * Normalizza una stringa eliminando tutti i caratteri di spaziatura.
+ * @param input La stringa in ingresso.
+ * @param output Il buffer in cui salvare la stringa normalizzata.
+ *               Si assume che output abbia sufficiente spazio.
+ */
+static void normalize_string(const char* input, char* output) {
+    while (*input) {
+        if (!isspace((unsigned char)*input)) {
+            *output = *input;
+            output++;
+        }
+        input++;
+    }
+    *output = '\0';
+}
 
 /**
  * Analizza una linea del file di quiz e la converte in una struttura Question.
@@ -22,33 +41,50 @@
  * @return true se il parsing è avvenuto con successo, false altrimenti
  * 
  * @note La funzione si aspetta che ci sia uno spazio prima e dopo il 
- *       carattere '|' nel formato "domanda | risposta"
+ *       carattere '|' nel formato "domanda | risposte corrette", con le risposte
+ *       separate da ciascuna da una virgola.
  * @note La funzione modifica la stringa di input usando strtok()
  */
 static bool parse_question_line(char* line, Question* question) {
+    // Suddivide la riga in due parti: domanda e risposte
     char* question_part = strtok(line, "|");
-    char* answer_part = strtok(NULL, "|");
+    char* answers_part = strtok(NULL, "|");
     
-    if (!question_part || !answer_part) {
+    if (!question_part || !answers_part) {
         return false;
     }
 
-    // Rimuovi eventuali spazi iniziali e finali
+    // Rimuove i leading spaces
     while (*question_part == ' ') question_part++;
-    while (*answer_part == ' ') answer_part++;
-
-    // Rimuovi eventuali newline dalla risposta
-    char* newline = strchr(answer_part, '\n');
+    while (*answers_part == ' ') answers_part++;
+    
+    // Rimuove eventuali newline nelle risposte
+    char* newline = strchr(answers_part, '\n');
     if (newline) *newline = '\0';
     
-    // Copia la domanda e la risposta nelle strutture
     strncpy(question->question, question_part, MAX_QUESTION_LENGTH - 1);
-    strncpy(question->correct_answer, answer_part, MAX_ANSWER_LENGTH - 1);
-    
-    // Assicurati che le stringhe siano terminate correttamente
     question->question[MAX_QUESTION_LENGTH - 1] = '\0';
-    question->correct_answer[MAX_ANSWER_LENGTH - 1] = '\0';
-    
+
+    question->num_correct = 0;
+
+    // Suddividiamo le risposte utilizzando la virgola come delimitatore
+    char* token = strtok(answers_part, ",");
+    while (token != NULL && question->num_correct < MAX_CORRECT_ANSWERS) {
+        char normalized[MAX_ANSWER_LENGTH];
+        normalize_string(token, normalized);
+        
+        strncpy(question->correct_answers[question->num_correct], normalized, MAX_ANSWER_LENGTH - 1);
+        question->correct_answers[question->num_correct][MAX_ANSWER_LENGTH - 1] = '\0';
+
+        question->num_correct++;
+        token = strtok(NULL, ",");
+    }
+
+    // Se non è stata trovata alcuna risposta, il parsing fallisce
+    if (question->num_correct == 0) {
+        return false;
+    }
+
     return true;
 }
 
@@ -144,9 +180,21 @@ bool check_answer(Quiz* quiz, int question_index, const char* answer) {
     if (!quiz || !answer || question_index < 0 || question_index >= quiz->total_count) {
         return false;
     }
-    DEBUG_PRINT("Correct answer: %s\n", quiz->questions[question_index].correct_answer);
-    // Confronta le stringhe ignorando maiuscole e minuscole
-    return strcasecmp(quiz->questions[question_index].correct_answer, answer) == 0;
+    
+    char normalized_user[MAX_ANSWER_LENGTH];
+    normalize_string(answer, normalized_user);
+    
+    Question* q = &quiz->questions[question_index];
+    for (int i = 0; i < q->num_correct; i++) {
+        DEBUG_PRINT("Confronto: utente '%s' con corretta '%s'\n", normalized_user, q->correct_answers[i]);
+        
+        if (strcasecmp(normalized_user, q->correct_answers[i]) == 0) {
+            return true;
+        }
+    }
+
+    // Se neanche una corrisponde, restituiamo false
+    return false;
 }
 
 int get_question_count(Quiz* quiz) {

@@ -11,7 +11,8 @@
  */
 typedef struct {
     char question[MAX_QUESTION_LENGTH];
-    char correct_answer[MAX_ANSWER_LENGTH];
+    int num_correct;
+    char correct_answers[MAX_CORRECT_ANSWERS][MAX_ANSWER_LENGTH];
 } Question;
 
 /**
