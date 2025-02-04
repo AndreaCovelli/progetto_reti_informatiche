@@ -41,11 +41,11 @@ I file dei quiz devono essere posizionati nella cartella `res/` con la seguente 
 Formato del file:
 ```
 Nome del tema
-Domanda-1 | Risposta-1
-Domanda-2 | Risposta-2
+Domanda-1 | Risposta-1, Risposta-2, Risposta-3, Risposta-4, Risposta-5
+Domanda-2 | Risposta-1, Risposta-2...
 ...
 ```
-Eventuali spazi bianchi o righe vuote vengono ignorati automaticamente.
+Eventuali leading o trailing spaces, righe che non rispettano la formattazione sopra, vengono ignorati automaticamente.
 
 ## Utilizzo
 ### Avvio del Server
@@ -116,7 +116,7 @@ La compilazione in modalità debug si ottiene con:
 ```bash
 make debug
 ```
-Questo genera eseguibili specifici per il debug (client_debug e server_debug) che coesistono con le versioni release, permettendo di alternare facilmente tra le due modalità.
+Questo genera eseguibili specifici per il debug (`client_debug` e `server_debug`) che coesistono con le versioni release, permettendo di alternare facilmente tra le due modalità.
 Inoltre abilita la macro DEBUG che attiva il sistema di logging.
 
 ### Sistema di Logging

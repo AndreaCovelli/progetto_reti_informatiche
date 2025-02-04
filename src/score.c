@@ -115,7 +115,7 @@ char* format_scores(ServerState* state) {
     if (!score_buffer) {
         return NULL;
     }
-    score_buffer[0] = '\0'; // Initializzo come stringa vuota
+    score_buffer[0] = '\0'; // Inizializzo come stringa vuota
     int offset = 0;
     
     format_participants_section(state, score_buffer, &offset, buf_size);
